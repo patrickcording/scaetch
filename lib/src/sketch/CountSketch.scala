@@ -9,17 +9,15 @@ import scala.util.hashing.MurmurHash3
   *
   * This implementation uses the MurmurHash3 algorithm for hashing.
   *
-  * @param k the number of most frequent elements to maintain by the CountSketch.
   * @param t see algorithm description. Good values are O(log N).
   * @param b see algorithm for description. In many cases, a good value is >= 2*k. Has to be a power of two.
   * @param seed the seed for chosing the hash functions used by the algorithm.
   */
-class CountSketch(k: Int, t: Int, b: Int, seed: Int) {
+class CountSketch(t: Int, b: Int, seed: Int) {
   require(
     (Math.log(b)/Math.log(2)) - (Math.log(b)/Math.log(2)).toInt.toDouble == 0.0,
     s"Parameter b must be a power of 2, $b is not a power of 2"
   )
-  require(k >= 1)
   require(t >= 1)
   require(b >= 2)
 
