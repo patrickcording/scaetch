@@ -1,0 +1,5 @@
+package sketch
+
+trait Sketch {
+
+}
