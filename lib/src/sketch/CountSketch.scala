@@ -9,8 +9,8 @@ import scala.util.hashing.MurmurHash3
   *
   * This implementation uses the MurmurHash3 algorithm for hashing.
   *
-  * @param t see algorithm description. Good values are O(log N).
-  * @param b see algorithm for description. In many cases, a good value is >= 2*k. Has to be a power of two.
+  * @param t the number of hash tables. Good values are O(log N).
+  * @param b the number of counters in each hash table. Has to be a power of two.
   * @param seed the seed for chosing the hash functions used by the algorithm.
   */
 class CountSketch(t: Int, b: Int, seed: Int) {
