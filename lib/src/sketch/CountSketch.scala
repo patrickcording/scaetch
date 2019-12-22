@@ -15,7 +15,7 @@ import scala.util.hashing.MurmurHash3
   */
 class CountSketch(t: Int, b: Int, seed: Int) {
   require(
-    (Math.log(b)/Math.log(2)) - (Math.log(b)/Math.log(2)).toInt.toDouble == 0.0,
+    (Math.log(b)/Math.log(2)).isWhole(),
     s"Parameter b must be a power of 2, $b is not a power of 2"
   )
   require(t >= 1)
