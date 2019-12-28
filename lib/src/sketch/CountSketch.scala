@@ -1,6 +1,5 @@
 package sketch
 
-import scala.util.Random
 import scala.util.hashing.MurmurHash3
 
 /**
@@ -9,51 +8,49 @@ import scala.util.hashing.MurmurHash3
   *
   * This implementation uses the MurmurHash3 algorithm for hashing.
   *
-  * @param t the number of hash tables. Good values are O(log N).
-  * @param b the number of counters in each hash table. Has to be a power of two.
+  * @param depth the number of hash tables. Good values are O(log N).
+  * @param width the number of counters in each hash table. Has to be a power of two.
   * @param seed the seed for chosing the hash functions used by the algorithm.
   */
-class CountSketch(t: Int, b: Int, seed: Int) {
+class CountSketch(val depth: Int, val width: Int, val seed: Int) extends Sketch[CountSketch] {
   require(
-    (Math.log(b)/Math.log(2)).isWhole(),
-    s"Parameter b must be a power of 2, $b is not a power of 2"
+    (Math.log(width)/Math.log(2)).isWhole(),
+    s"Parameter b must be a power of 2, $width is not a power of 2"
   )
-  require(t >= 1)
-  require(b >= 2)
+  require(depth >= 1)
+  require(width >= 2)
 
-  /**
-    * Definitions of hash functions. We are using Murmur3 for both.
-    */
-  private val shift = (Math.log(b)/Math.log(2)).toInt
-  private def h(_seed: Int)(data: String) = MurmurHash3.stringHash(data, _seed) >>> (32-shift)
-  private def s(_seed: Int)(data: String) = if ((MurmurHash3.stringHash(data, _seed) & 1) == 0) -1 else 1
+  private val buckets = Array.ofDim[Int](depth)
+  private val counters = Array.ofDim[Int](depth)
+  private val shift = 32-(Math.log(width)/Math.log(2)).toInt
 
-  /**
-    * Initialise hash functions with random seeds. The seeds are based on a global seed so that sketches can be
-    * merged.
-    */
-  private val r = new Random(seed)
-  private val counterHashFunctions = (1 to t).map(_ => r.nextInt()).map(s)
-  private val bucketHashFunctions = (1 to t).map(_ => r.nextInt()).map(h)
+  private def setBucketsAndCounters(elem: String): Unit = {
+    val hash1 = MurmurHash3.stringHash(elem, seed)
+    val hash2 = MurmurHash3.stringHash(elem, hash1)
+    val hash3 = MurmurHash3.stringHash(elem, hash2)
+    val hash4 = MurmurHash3.stringHash(elem, hash3)
+    for (i <- 0 until depth) {
+      val h1 = hash1 + i*hash2
+      val h2 = hash3 + i*hash4
+      buckets(i) = h1 >>> shift
+      counters(i) = if ((h2 & 1) == 0) -1 else 1
+    }
+  }
 
   /**
     * Internal data structure.
     */
-  private val C = Array.ofDim[Long](t, b)
-
-  /**
-    * Helper functions.
-    */
-  private def mean(arr: Seq[Long]): Long = arr.sorted.apply(arr.length/2)
+  private val C = Array.ofDim[Long](depth, width)
 
   /**
     * Estimate the frequency of an element.
     * @param elem
     * @return estimated frequency
     */
-  def estimate(elem: String): Long = {
-    val counterValues = (0 until t).map(idx => C(idx)(bucketHashFunctions(idx)(elem)) * counterHashFunctions(idx)(elem))
-    mean(counterValues)
+  override def estimate(elem: String): Long = {
+    setBucketsAndCounters(elem)
+    val values = (0 until depth).map(i => C(i)(buckets(i)) * counters(i))
+    values.sorted.apply(depth/2)
   }
 
   /**
@@ -61,14 +58,17 @@ class CountSketch(t: Int, b: Int, seed: Int) {
     * @param data
     * @return this CountSketch
     */
-  def add(data: String): CountSketch = {
+  override def add(data: String): CountSketch = {
     add(data, 1)
     this
   }
 
-  def add(data: String, occurrences: Int): CountSketch = {
+  override def add(data: String, occurrences: Long): CountSketch = {
     // Update counters
-    (0 until t).foreach(idx => C(idx)(bucketHashFunctions(idx)(data)) += occurrences * counterHashFunctions(idx)(data))
+    setBucketsAndCounters(data)
+    for (i <- 0 until depth) {
+      C(i)(buckets(i)) += occurrences * counters(i)
+    }
     this
   }
 
@@ -77,9 +77,14 @@ class CountSketch(t: Int, b: Int, seed: Int) {
     * @param other
     * @return
     */
-  def merge(other: CountSketch): CountSketch = {
-    for (i <- 0 until t; j <- 0 until b) { C(i)(j) += other.C(i)(j) }
-    this
+  override def merge(other: CountSketch): CountSketch = {
+    if (depth == other.depth && width == other.width && seed == other.seed) {
+      for (i <- 0 until depth; j <- 0 until width) {
+        C(i)(j) += other.C(i)(j)
+      }
+      this
+    } else {
+      throw new Exception("Can't merge two sketches initialized with different parameters")
+    }
   }
-
 }
