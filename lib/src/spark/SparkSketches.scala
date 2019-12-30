@@ -7,34 +7,65 @@ import sketch.{BufferedSketch, CountMinSketch, CountSketch, Sketch}
 import scala.reflect.ClassTag
 
 class SparkSketches(df: DataFrame) {
-  def count(column: Column, depth: Int, width: Int, seed: Int): CountSketch = {
-    val sketch = new CountSketch(depth, width, seed)
-    doSketching(column, sketch)
+  def longCount(column: Column, depth: Int, width: Int, seed: Int): CountSketch[Long] = {
+    val sketch = CountSketch[Long](depth, width, seed)
+    doSketchingOnLongs(column, sketch)
   }
 
-  def bufferedCount(column: Column, depth: Int, width: Int, seed: Int, bufferSize: Int): BufferedSketch[CountSketch] = {
-    val sketch = new BufferedSketch(new CountSketch(depth, width, seed), bufferSize)
-    doSketching(column, sketch)
+  def bufferedLongCount(column: Column, depth: Int, width: Int, seed: Int, bufferSize: Int): BufferedSketch[CountSketch, Long] = {
+    val sketch = CountSketch[Long](depth, width, seed)
+    val bufferedSketch = new BufferedSketch(sketch, bufferSize)
+    doSketchingOnLongs(column, bufferedSketch)
   }
 
-  def countMin(column: Column, depth: Int, width: Int, seed: Int): CountMinSketch = {
-    val sketch = new CountMinSketch(depth, width, seed)
-    doSketching(column, sketch)
+  def stringCount(column: Column, depth: Int, width: Int, seed: Int): CountSketch[String] = {
+    val sketch = CountSketch[String](depth, width, seed)
+    doSketchingOnStrings(column, sketch)
   }
 
-  def bufferedCountMin(column: Column, depth: Int, width: Int, seed: Int, bufferSize: Int): BufferedSketch[CountMinSketch] = {
-    val sketch = new BufferedSketch(new CountMinSketch(depth, width, seed), bufferSize)
-    doSketching(column, sketch)
+  def bufferedStringCount(column: Column, depth: Int, width: Int, seed: Int, bufferSize: Int): BufferedSketch[CountSketch, String] = {
+    val sketch = CountSketch[String](depth, width, seed)
+    val bufferedSketch = new BufferedSketch(sketch, bufferSize)
+    doSketchingOnStrings(column, bufferedSketch)
   }
 
-  private def doSketching[T <: Sketch[T]](column: Column, sketch: T)
-                                         (implicit tag: ClassTag[T]): T = {
+  def longCountMin(column: Column, depth: Int, width: Int, seed: Int): CountMinSketch[Long] = {
+    val sketch = CountMinSketch[Long](depth, width, seed)
+    doSketchingOnLongs(column, sketch)
+  }
+
+  def bufferedLongCountMin(column: Column, depth: Int, width: Int, seed: Int, bufferSize: Int): BufferedSketch[CountMinSketch, Long] = {
+    val sketch = CountMinSketch[Long](depth, width, seed)
+    val bufferedSketch = new BufferedSketch(sketch, bufferSize)
+    doSketchingOnLongs(column, bufferedSketch)
+  }
+
+  def stringCountMin(column: Column, depth: Int, width: Int, seed: Int): CountMinSketch[String] = {
+    val sketch = CountMinSketch[String](depth, width, seed)
+    doSketchingOnStrings(column, sketch)
+  }
+
+  def bufferedStringCountMin(column: Column, depth: Int, width: Int, seed: Int, bufferSize: Int): BufferedSketch[CountMinSketch, String] = {
+    val sketch = CountMinSketch[String](depth, width, seed)
+    val bufferedSketch = new BufferedSketch(sketch, bufferSize)
+    doSketchingOnStrings(column, bufferedSketch)
+  }
+
+  private def doSketchingOnLongs[A <: Sketch[A, Long]](column: Column, sketch: A)
+                                                      (implicit tag: ClassTag[A]): A = {
     val singleColumnDf = df.select(column)
-    val dataType = singleColumnDf.schema.head.dataType
-
     singleColumnDf.queryExecution.toRdd.aggregate(sketch)(
-      (sketch: T, row: InternalRow) => sketch.add(row.get(0, dataType).toString),
-      (sketch1: T, sketch2: T) => sketch1.merge(sketch2)
+      (sketch: A, row: InternalRow) => sketch.add(row.getLong(0)),
+      (sketch1: A, sketch2: A) => sketch1.merge(sketch2)
+    )
+  }
+
+  private def doSketchingOnStrings[A <: Sketch[A, String]](column: Column, sketch: A)
+                                                          (implicit tag: ClassTag[A]): A = {
+    val singleColumnDf = df.select(column)
+    singleColumnDf.queryExecution.toRdd.aggregate(sketch)(
+      (sketch: A, row: InternalRow) => sketch.add(row.getString(0)),
+      (sketch1: A, sketch2: A) => sketch1.merge(sketch2)
     )
   }
 }
