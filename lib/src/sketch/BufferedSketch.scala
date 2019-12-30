@@ -1,22 +1,21 @@
 package sketch
 
 import scala.collection.mutable
-import scala.reflect.ClassTag
 
 
-class BufferedSketch[T <: Sketch[T]](val sketch: T, val bufferSize: Int)(implicit val tag: ClassTag[T])
-  extends Sketch[BufferedSketch[T]] with Serializable {
+class BufferedSketch[A[T] <: Sketch[A[T], T], T](val sketch: A[T], val bufferSize: Int)
+  extends Sketch[BufferedSketch[A, T], T] with Serializable {
 
-  private val buffer = mutable.Map.empty[String, Long]
+  private val buffer = mutable.Map.empty[T, Long]
 
   def flush() = {
     buffer.foreach { case (e, c) => sketch.add(e, c) }
     buffer.clear()
   }
 
-  override def add(elem: String): BufferedSketch[T] = add(elem, 1L)
+  override def add(elem: T): BufferedSketch[A, T] = add(elem, 1L)
 
-  override def add(elem: String, count: Long): BufferedSketch[T] = {
+  override def add(elem: T, count: Long): BufferedSketch[A, T] = {
     buffer.update(elem, buffer.getOrElse(elem, 0L) + count)
     if (buffer.size > bufferSize) {
       flush()
@@ -24,14 +23,14 @@ class BufferedSketch[T <: Sketch[T]](val sketch: T, val bufferSize: Int)(implici
     this
   }
 
-  override def merge(other: BufferedSketch[T]): BufferedSketch[T] = {
+  override def merge(other: BufferedSketch[A, T]): BufferedSketch[A, T] = {
     flush()
     other.flush()
     val mergedSketch = sketch.merge(other.sketch)
     new BufferedSketch(mergedSketch, Math.min(bufferSize, other.bufferSize))
   }
 
-  override def estimate(elem: String): Long = {
+  override def estimate(elem: T): Long = {
     flush()
     sketch.estimate(elem)
   }
