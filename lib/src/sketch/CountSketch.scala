@@ -80,37 +80,41 @@ object CountSketch {
               (implicit sk: (Int, Int, Int) => CountSketch[T]): CountSketch[T] = sk(depth, width, seed)
 
   implicit def stringCountSketch(depth: Int, width: Int, seed: Int): CountSketch[String] = {
-    new CountSketch[String](depth, width, seed) {
-      override def setBucketsAndCounters(elem: String): Unit = {
-        val hash1 = MurmurHash3.stringHash(elem, seed)
-        val hash2 = MurmurHash3.stringHash(elem, hash1)
-        val hash3 = MurmurHash3.stringHash(elem, hash2)
-        val hash4 = MurmurHash3.stringHash(elem, hash3)
-        for (i <- 0 until depth) {
-          val h1 = hash1 + i*hash2
-          val h2 = hash3 + i*hash4
-          buckets(i) = h1 >>> shift
-          counters(i) = if ((h2 & 1) == 0) -1 else 1
-        }
+    new CountSketch[String](depth, width, seed) with StringHashing
+  }
+
+  implicit def longCountSketch(depth: Int, width: Int, seed: Int): CountSketch[Long] = {
+    new CountSketch[Long](depth, width, seed) with LongHashing
+  }
+
+  trait StringHashing extends CountSketch[String] {
+    override def setBucketsAndCounters(elem: String): Unit = {
+      val hash1 = MurmurHash3.stringHash(elem, seed)
+      val hash2 = MurmurHash3.stringHash(elem, hash1)
+      val hash3 = MurmurHash3.stringHash(elem, hash2)
+      val hash4 = MurmurHash3.stringHash(elem, hash3)
+      for (i <- 0 until depth) {
+        val h1 = hash1 + i*hash2
+        val h2 = hash3 + i*hash4
+        buckets(i) = h1 >>> shift
+        counters(i) = if ((h2 & 1) == 0) -1 else 1
       }
     }
   }
 
-  implicit def longCountSketch(depth: Int, width: Int, seed: Int): CountSketch[Long] = {
-    new CountSketch[Long](depth, width, seed) {
-      private val r = new Random(seed)
-      private val A1 = Array.fill[Long](depth)(r.nextLong())
-      private val B1 = Array.fill[Long](depth)(r.nextLong())
-      private val A2 = Array.fill[Long](depth)(r.nextLong())
-      private val B2 = Array.fill[Long](depth)(r.nextLong())
+  trait LongHashing extends CountSketch[Long] {
+    private val r = new Random(seed)
+    private val A1 = Array.fill[Long](depth)(r.nextLong())
+    private val B1 = Array.fill[Long](depth)(r.nextLong())
+    private val A2 = Array.fill[Long](depth)(r.nextLong())
+    private val B2 = Array.fill[Long](depth)(r.nextLong())
 
-      override def setBucketsAndCounters(elem: Long): Unit = {
-        for (i <- 0 until depth) {
-          val h1 = A1(i)*elem + B1(i)
-          val h2 = A2(i)*elem + B2(i)
-          buckets(i) = h1.toInt >>> shift
-          counters(i) = if ((h2 & 1) == 0) -1 else 1
-        }
+    override def setBucketsAndCounters(elem: Long): Unit = {
+      for (i <- 0 until depth) {
+        val h1 = A1(i)*elem + B1(i)
+        val h2 = A2(i)*elem + B2(i)
+        buckets(i) = h1.toInt >>> shift
+        counters(i) = if ((h2 & 1) == 0) -1 else 1
       }
     }
   }
