@@ -12,7 +12,7 @@ abstract class CountMinSketch[T](val depth: Int, val width: Int, val seed: Int) 
   require(depth >= 1)
   require(width >= 2)
 
-  private val C = Array.ofDim[Long](depth, width)
+  protected val C = Array.ofDim[Long](depth, width)
   protected val buckets = Array.ofDim[Int](depth)
   protected val shift = 32-(Math.log(width)/Math.log(2)).toInt
 
@@ -50,31 +50,57 @@ abstract class CountMinSketch[T](val depth: Int, val width: Int, val seed: Int) 
 
 object CountMinSketch {
   def apply[T](depth: Int, width: Int, seed: Int)
-              (implicit sk: (Int, Int, Int) => CountMinSketch[T]): CountMinSketch[T] = sk(depth, width, seed)
+              (implicit sk: (Int, Int, Int, Boolean) => CountMinSketch[T]): CountMinSketch[T] = sk(depth, width, seed, false)
 
-  implicit def stringCountMinSketch(depth: Int, width: Int, seed: Int): CountMinSketch[String] = {
-    new CountMinSketch[String](depth, width, seed) {
-      override def setBuckets(elem: String): Unit = {
-        val hash1 = MurmurHash3.stringHash(elem, seed)
-        val hash2 = MurmurHash3.stringHash(elem, hash1)
-        for (i <- 0 until depth) {
-          buckets(i) = (hash1 + i*hash2) >>> shift
-        }
+  def apply[T](depth: Int, width: Int, seed: Int, enableConservativeUpdates: Boolean)
+              (implicit sk: (Int, Int, Int, Boolean) => CountMinSketch[T]): CountMinSketch[T] = sk(depth, width, seed, enableConservativeUpdates)
+
+  implicit def stringCountMinSketch(depth: Int, width: Int, seed: Int, consUpd: Boolean): CountMinSketch[String] = {
+    if (consUpd) {
+      new CountMinSketch[String](depth, width, seed) with StringHashing with ConservativeUpdates[String]
+    } else {
+      new CountMinSketch[String](depth, width, seed) with StringHashing
+    }
+  }
+
+  implicit def longCountMinSketch(depth: Int, width: Int, seed: Int, consUpd: Boolean): CountMinSketch[Long] = {
+    if (consUpd) {
+      new CountMinSketch[Long](depth, width, seed) with LongHashing with ConservativeUpdates[Long]
+    } else {
+      new CountMinSketch[Long](depth, width, seed) with LongHashing
+    }
+  }
+
+  trait ConservativeUpdates[T] extends CountMinSketch[T] {
+    abstract override def add(elem: T, count: Long): CountMinSketch[T] = {
+      setBuckets(elem)
+      val updateValue = count + (0 until depth).map(i => C(i)(buckets(i))).min
+      for (i <- 0 until depth) {
+        C(i)(buckets(i)) = Math.max(C(i)(buckets(i)), updateValue)
+      }
+      this
+    }
+  }
+
+  trait StringHashing extends CountMinSketch[String] {
+    override def setBuckets(elem: String): Unit = {
+      val hash1 = MurmurHash3.stringHash(elem, seed)
+      val hash2 = MurmurHash3.stringHash(elem, hash1)
+      for (i <- 0 until depth) {
+        buckets(i) = (hash1 + i*hash2) >>> shift
       }
     }
   }
 
-  implicit def longCountMinSketch(depth: Int, width: Int, seed: Int): CountMinSketch[Long] = {
-    new CountMinSketch[Long](depth, width, seed) {
-      private val r = new Random(seed)
-      private val A1 = Array.fill[Long](depth)(r.nextLong())
-      private val B1 = Array.fill[Long](depth)(r.nextLong())
+  trait LongHashing extends CountMinSketch[Long] {
+    private val r = new Random(seed)
+    private val A1 = Array.fill[Long](depth)(r.nextLong())
+    private val B1 = Array.fill[Long](depth)(r.nextLong())
 
-      override def setBuckets(elem: Long): Unit = {
-        for (i <- 0 until depth) {
-          val h1 = A1(i)*elem + B1(i)
-          buckets(i) = h1.toInt >>> shift
-        }
+    override def setBuckets(elem: Long): Unit = {
+      for (i <- 0 until depth) {
+        val h1 = A1(i)*elem + B1(i)
+        buckets(i) = h1.toInt >>> shift
       }
     }
   }
