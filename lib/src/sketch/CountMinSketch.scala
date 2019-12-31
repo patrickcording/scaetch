@@ -73,6 +73,8 @@ object CountMinSketch {
 
   trait ConservativeUpdates[T] extends CountMinSketch[T] {
     abstract override def add(elem: T, count: Long): CountMinSketch[T] = {
+      require(count >= 0, "Negative updates not allowed when conservative updating is enabled")
+
       setBuckets(elem)
       val updateValue = count + (0 until depth).map(i => C(i)(buckets(i))).min
       for (i <- 0 until depth) {
