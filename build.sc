@@ -16,6 +16,11 @@ trait SparkSketchModule extends ScalaModule {
 
 object lib extends SparkSketchModule
 
-object demo extends SparkSketchModule {
+object benchmark extends SparkSketchModule {
   override def moduleDeps = Seq(lib)
+
+  override def ivyDeps = Agg(
+    ivy"org.apache.spark::spark-sql:2.4.1",
+    ivy"org.scalaz::scalaz-core:7.2.29"
+  )
 }
