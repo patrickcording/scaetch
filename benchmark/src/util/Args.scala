@@ -24,27 +24,49 @@ object Args {
        |  mill benchmark.Benchmark 5 16,512 50 path/to/file
      """.stripMargin
 
-  def parse(args: Array[String]): BenchmarkArgs = {
+  def validate(args: Array[String]): BenchmarkArgs = {
     if (args.length != 4) {
       throw new IllegalArgumentException(s"""Incorrect number of arguments\n\n""" + usage)
     }
 
-    val depth = Try { args(1).toInt }
-      .getOrElse(throw new IllegalArgumentException("depth should be an integer.\n\n" + usage))
-
-    val rangeArray = Try {
-      val range = args(2).split(",").map(_.toInt)
-      if (range.length != 2) throw Exception
-      range
-    }.getOrElse(throw new IllegalArgumentException("width_range should be two integers separated by ','.\n\n" + usage))
-    val widthRange = rangeArray(0) to rangeArray(1)
-
-    val k = Try { args(3).toInt }
-      .getOrElse(throw new IllegalArgumentException("k should be an integer.\n\n" + usage))
-
-    val file = if (File.exists(args(4))) args(4) else throw new IllegalArgumentException("File does not exist.\n\n" + usage)
-
-    BenchmarkArgs(depth, widthRange, k, file)
+    val validationResult = validateArgs(args)
+    validationResult match {
+      case Success(benchmarkArgs) => benchmarkArgs
+      case Failure(errors) =>
+        val message = "Could not parse arguments:\n\n" + errors.map(e => "- " + e).mkString("\n")
+        throw new IllegalArgumentException(message)
+    }
   }
 
+  private def getInt(v: String) = Try { v.toInt }.toOption
+
+  private def validateArgs(args: Array[String]): Validation[List[String], BenchmarkArgs] = {
+    def validDepth(depth: String) = getInt(depth) match {
+      case Some(v) if v > 0 => v.success
+      case _ => List("depth should be a positive integer").failure
+    }
+
+    def validWidthRange(widthRange: String) = {
+      val range = widthRange.split(",")
+      (getInt(range(0)), if (range.length == 2) getInt(range(1)) else None) match {
+        case (Some(start), Some(end)) if start > 0 & end > 0 => (start to end).success
+        case _ => List("width_range should be two positive integers separated by ','").failure
+      }
+    }
+
+    def validK(k: String) = getInt(k) match {
+      case Some(v) if v > 0 => v.success
+      case _ => List("k should be a positive integer").failure
+    }
+
+    def validFile(file: String) = {
+      if (File.exists(file)) file.success
+      else List("File does not exist").failure
+    }
+
+    (validDepth(args(0))
+      |@| validWidthRange(args(1))
+      |@| validK(args(2))
+      |@| validFile(args(3)))((depth, range, k, file) => BenchmarkArgs(depth, range, k, file))
+  }
 }
