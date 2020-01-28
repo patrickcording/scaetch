@@ -1,5 +1,8 @@
 package sketch
 
+import net.openhft.hashing.LongHashFunction
+import org.apache.spark.sql.catalyst.expressions.XXH64
+
 import scala.util.Random
 import scala.util.hashing.MurmurHash3
 
@@ -7,14 +10,14 @@ import scala.util.hashing.MurmurHash3
 abstract class CountMinSketch[T](val depth: Int, val width: Int, val seed: Int) extends Sketch[CountMinSketch[T], T] {
   require(
     (Math.log(width)/Math.log(2)).isWhole(),
-    s"Parameter b must be a power of 2, $width is not a power of 2"
+    s"Width must be a power of 2, $width is not a power of 2"
   )
   require(depth >= 1)
   require(width >= 2)
 
   protected val C = Array.ofDim[Long](depth, width)
   protected val buckets = Array.ofDim[Int](depth)
-  protected val shift = 32-(Math.log(width)/Math.log(2)).toInt
+  final protected val shift = 32-(Math.log(width)/Math.log(2)).toInt
 
   protected def getMin() = {
     var i = 0
@@ -105,9 +108,12 @@ object CountMinSketch {
   }
 
   trait StringHashing extends CountMinSketch[String] {
+    private val h = LongHashFunction.xx(seed)
+
     override def setBuckets(elem: String): Unit = {
-      val hash1 = MurmurHash3.stringHash(elem, seed)
-      val hash2 = MurmurHash3.stringHash(elem, hash1)
+      val v = h.hashChars(elem)
+      val hash1 = (v & 0xFFFFFFFFL).toInt
+      val hash2 = (v >>> 32).toInt
 
       var i = 0
       while (i < depth) {
