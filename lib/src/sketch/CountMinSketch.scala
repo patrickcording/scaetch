@@ -1,10 +1,8 @@
 package sketch
 
 import net.openhft.hashing.LongHashFunction
-import org.apache.spark.sql.catalyst.expressions.XXH64
 
 import scala.util.Random
-import scala.util.hashing.MurmurHash3
 
 
 abstract class CountMinSketch[T](val depth: Int, val width: Int, val seed: Int) extends Sketch[CountMinSketch[T], T] {
