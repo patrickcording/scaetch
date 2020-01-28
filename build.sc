@@ -8,13 +8,8 @@ trait SparkSketchModule extends ScalaModule {
   def scalaVersion = "2.11.12"
 
   override def ivyDeps = Agg(
-    ivy"net.openhft:zero-allocation-hashing:0.10.1",
-    ivy"org.apache.spark::spark-sql:2.4.1"
+    ivy"net.openhft:zero-allocation-hashing:0.10.1"
   )
-
-  override def assemblyRules = Assembly.defaultRules ++
-    Seq("scala/.*", "org\\.apache\\.spark/.*")
-      .map(Assembly.Rule.ExcludePattern.apply)
 }
 
 object lib extends SparkSketchModule
