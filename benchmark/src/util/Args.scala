@@ -4,9 +4,10 @@ import scala.util.{Failure, Try}
 
 
 case class BenchmarkArgs(
-                        depth: Int,
-                        width: Range,
+                        depths: List[Int],
+                        widths: List[Int],
                         k: Int,
+                        dataType: String,
                         file: String
                         )
 
@@ -19,11 +20,11 @@ object Args {
        |
        |Example:
        |
-       |  mill benchmark.Benchmark 5 16,512 50 path/to/file
+       |  mill benchmark.Benchmark 5,10 16,512 50 path/to/file
      """.stripMargin
 
   def validate(args: Array[String]): BenchmarkArgs = {
-    if (args.length != 4) {
+    if (args.length != 5) {
       throw new IllegalArgumentException(s"""Incorrect number of arguments\n\n""" + usage)
     }
 
@@ -37,18 +38,26 @@ object Args {
   }
 
   private def getInt(v: String) = Try { v.toInt }.toOption
+  private def isPowerOfTwo(v: Int) = (Math.log(v)/Math.log(2)).isWhole()
 
   private def validateArgs(args: Array[String]): Either[List[String], BenchmarkArgs] = {
-    val validDepth = (depth: String) => getInt(depth) match {
-      case Some(v) if v > 0 => v
-      case _ => throw new IllegalArgumentException("depth should be a positive integer")
+    val validDepthRange = (depthRange: String) => {
+      val range = depthRange.split(",")
+      (getInt(range(0)), if (range.length == 2) getInt(range(1)) else None) match {
+        case (Some(start), Some(end)) if start > 0 & end > 0 & end >= start =>
+          (start to end).toList
+        case _ =>
+          throw new IllegalArgumentException("dept_range should be two positive integers that are separated by ','")
+      }
     }
 
     val validWidthRange = (widthRange: String) => {
       val range = widthRange.split(",")
       (getInt(range(0)), if (range.length == 2) getInt(range(1)) else None) match {
-        case (Some(start), Some(end)) if start > 0 & end > 0 => (start to end)
-        case _ => throw new IllegalArgumentException("width_range should be two positive integers separated by ','")
+        case (Some(start), Some(end)) if start > 0 & end > 0 & isPowerOfTwo(start) & isPowerOfTwo(end) =>
+          ((Math.log(start)/Math.log(2)).toInt to (Math.log(end)/Math.log(2)).toInt).toList.map(v => Math.pow(2, v).toInt)
+        case _ =>
+          throw new IllegalArgumentException("width_range should be two positive integers that are powers of two separated by ','")
       }
     }
 
@@ -57,20 +66,25 @@ object Args {
       case _ => throw new IllegalArgumentException("k should be a positive integer")
     }
 
+    val validDataType = (dataType: String) => {
+      if (dataType == "long" || dataType == "string") dataType
+      else throw new IllegalArgumentException("datatype should 'long' or 'string'")
+    }
+
     val validFile = (file: String) => {
       if (File.exists(file)) file
       else throw new IllegalArgumentException("File does not exist")
     }
 
-    val validators = List(validDepth, validWidthRange, validK, validFile)
+    val validators = List(validDepthRange, validWidthRange, validK, validDataType, validFile)
     val results = args.zip(validators).map { case (arg, validate) => Try(validate(arg)) }
 
     if (results.exists(_.isFailure)) {
       Left(results.filter(_.isFailure).map { case Failure(e) => e.getMessage }.toList)
     } else {
       val resultValues = results.map(_.get)
-      (resultValues(0), resultValues(1), resultValues(2), resultValues(3)) match {
-        case t: (Int, Range, Int, String) => Right(BenchmarkArgs.tupled(t))
+      (resultValues(0), resultValues(1), resultValues(2), resultValues(3), resultValues(4)) match {
+        case t: (List[Int], List[Int], Int, String, String) => Right(BenchmarkArgs.tupled(t))
       }
     }
   }
