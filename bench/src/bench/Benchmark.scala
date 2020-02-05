@@ -1,8 +1,9 @@
-import org.scalameter._
-import sketch.{BufferedSketch, CountMinSketch, CountSketch, SparkCountMinSketchWrapper}
-import util.{Args, DeepSize, File, Printer}
+package bench
 
+import sketch.{BufferedSketch, CountMinSketch, CountSketch}
+import util._
 import scala.collection.mutable
+import org.scalameter._
 
 
 object Benchmark extends App {
@@ -13,7 +14,7 @@ object Benchmark extends App {
       (CountSketch[String](depth, width, SEED), "CountSketch"),
       (CountMinSketch[String](depth, width, SEED), "CountMinSketch"),
       (CountMinSketch[String](depth, width, SEED, true), "CountMinSketch w CS"),
-      (SparkCountMinSketchWrapper[String](depth, width, SEED), "SparkCountMinSketchWrapper"),
+      //(SparkCountMinSketchWrapper[String](depth, width, SEED), "SparkCountMinSketchWrapper"),
       (new BufferedSketch(CountSketch[String](depth, width, SEED), bufferSize), "BufferedCountSketch"),
       (new BufferedSketch(CountMinSketch[String](depth, width, SEED), bufferSize), "BufferedCountMinSketch")
     )
