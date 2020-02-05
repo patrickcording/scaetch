@@ -1,26 +1,37 @@
 package sketch
 
+import net.openhft.hashing.LongHashFunction
+
 import scala.util.Random
-import scala.util.hashing.MurmurHash3
 
 
 abstract class CountMinSketch[T](val depth: Int, val width: Int, val seed: Int) extends Sketch[CountMinSketch[T], T] {
   require(
     (Math.log(width)/Math.log(2)).isWhole(),
-    s"Parameter b must be a power of 2, $width is not a power of 2"
+    s"Width must be a power of 2, $width is not a power of 2"
   )
   require(depth >= 1)
   require(width >= 2)
 
   protected val C = Array.ofDim[Long](depth, width)
   protected val buckets = Array.ofDim[Int](depth)
-  protected val shift = 32-(Math.log(width)/Math.log(2)).toInt
+  final protected val shift = 32-(Math.log(width)/Math.log(2)).toInt
+
+  protected def getMin() = {
+    var i = 0
+    var min = Long.MaxValue
+    while (i < depth) {
+      min = Math.min(min, C(i)(buckets(i)))
+      i += 1
+    }
+    min
+  }
 
   def setBuckets(elem: T): Unit
 
   override def estimate(elem: T): Long = {
     setBuckets(elem)
-    (0 until depth).map(i => C(i)(buckets(i))).min
+    getMin()
   }
 
   override def add(elem: T): CountMinSketch[T] = {
@@ -30,16 +41,23 @@ abstract class CountMinSketch[T](val depth: Int, val width: Int, val seed: Int) 
 
   override def add(elem: T, occurrences: Long): CountMinSketch[T] = {
     setBuckets(elem)
-    for (i <- 0 until depth) {
+    var i = 0
+    while (i < depth) {
       C(i)(buckets(i)) += occurrences
+      i += 1
     }
     this
   }
 
   override def merge(other: CountMinSketch[T]): CountMinSketch[T] = {
     if (depth == other.depth && width == other.width && seed == other.seed) {
-      for (i <- 0 until depth; j <- 0 until width) {
-        C(i)(j) += other.C(i)(j)
+      var i, j = 0
+      while (i < depth) {
+        while(j < width) {
+          C(i)(j) += other.C(i)(j)
+          j += 1
+        }
+        i += 1
       }
       this
     } else {
@@ -76,20 +94,29 @@ object CountMinSketch {
       require(count >= 0, "Negative updates not allowed when conservative updating is enabled")
 
       setBuckets(elem)
-      val updateValue = count + (0 until depth).map(i => C(i)(buckets(i))).min
-      for (i <- 0 until depth) {
+      val updateValue = count + super.getMin()
+
+      var i = 0
+      while (i < depth) {
         C(i)(buckets(i)) = Math.max(C(i)(buckets(i)), updateValue)
+        i += 1
       }
       this
     }
   }
 
   trait StringHashing extends CountMinSketch[String] {
+    private val h = LongHashFunction.xx(seed)
+
     override def setBuckets(elem: String): Unit = {
-      val hash1 = MurmurHash3.stringHash(elem, seed)
-      val hash2 = MurmurHash3.stringHash(elem, hash1)
-      for (i <- 0 until depth) {
+      val v = h.hashChars(elem)
+      val hash1 = (v & 0xFFFFFFFFL).toInt
+      val hash2 = (v >>> 32).toInt
+
+      var i = 0
+      while (i < depth) {
         buckets(i) = (hash1 + i*hash2) >>> shift
+        i += 1
       }
     }
   }
@@ -100,9 +127,11 @@ object CountMinSketch {
     private val B1 = Array.fill[Long](depth)(r.nextLong())
 
     override def setBuckets(elem: Long): Unit = {
-      for (i <- 0 until depth) {
+      var i = 0
+      while (i < depth) {
         val h1 = A1(i)*elem + B1(i)
         buckets(i) = h1.toInt >>> shift
+        i += 1
       }
     }
   }

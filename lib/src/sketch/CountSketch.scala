@@ -35,7 +35,12 @@ abstract class CountSketch[T](val depth: Int, val width: Int, val seed: Int) ext
     */
   override def estimate(elem: T): Long = {
     setBucketsAndCounters(elem)
-    val values = (0 until depth).map(i => C(i)(buckets(i)) * counters(i))
+    val values = Array.ofDim[Long](depth)
+    var i = 0
+    while (i < depth) {
+      values(i) = C(i)(buckets(i)) * counters(i)
+      i += 1
+    }
     values.sorted.apply(depth/2)
   }
 
@@ -50,10 +55,11 @@ abstract class CountSketch[T](val depth: Int, val width: Int, val seed: Int) ext
   }
 
   override def add(elem: T, occurrences: Long): CountSketch[T] = {
-    // Update counters
     setBucketsAndCounters(elem)
-    for (i <- 0 until depth) {
+    var i = 0
+    while (i < depth) {
       C(i)(buckets(i)) += occurrences * counters(i)
+      i += 1
     }
     this
   }
@@ -67,6 +73,14 @@ abstract class CountSketch[T](val depth: Int, val width: Int, val seed: Int) ext
     if (depth == other.depth && width == other.width && seed == other.seed) {
       for (i <- 0 until depth; j <- 0 until width) {
         C(i)(j) += other.C(i)(j)
+      }
+      var i, j = 0
+      while (i < depth) {
+        while (j < width) {
+          C(i)(j) += other.C(i)(j)
+          j += 1
+        }
+        i += 1
       }
       this
     } else {
@@ -93,11 +107,13 @@ object CountSketch {
       val hash2 = MurmurHash3.stringHash(elem, hash1)
       val hash3 = MurmurHash3.stringHash(elem, hash2)
       val hash4 = MurmurHash3.stringHash(elem, hash3)
-      for (i <- 0 until depth) {
+      var i = 0
+      while (i < depth) {
         val h1 = hash1 + i*hash2
         val h2 = hash3 + i*hash4
         buckets(i) = h1 >>> shift
         counters(i) = if ((h2 & 1) == 0) -1 else 1
+        i += 1
       }
     }
   }
@@ -110,11 +126,13 @@ object CountSketch {
     private val B2 = Array.fill[Long](depth)(r.nextLong())
 
     override def setBucketsAndCounters(elem: Long): Unit = {
-      for (i <- 0 until depth) {
+      var i = 0
+      while (i < depth) {
         val h1 = A1(i)*elem + B1(i)
         val h2 = A2(i)*elem + B2(i)
         buckets(i) = h1.toInt >>> shift
         counters(i) = if ((h2 & 1) == 0) -1 else 1
+        i += 1
       }
     }
   }

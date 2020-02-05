@@ -6,7 +6,7 @@ import sketch.{BufferedSketch, CountMinSketch, CountSketch, Sketch}
 
 import scala.reflect.ClassTag
 
-class SparkSketches(df: DataFrame) {
+class implicits(df: DataFrame) {
   def longCount(column: Column, depth: Int, width: Int, seed: Int): CountSketch[Long] = {
     val sketch = CountSketch[Long](depth, width, seed)
     doSketchingOnLongs(column, sketch)
@@ -70,8 +70,8 @@ class SparkSketches(df: DataFrame) {
   }
 }
 
-object SparkSketches {
+object implicits {
   implicit class DataFrameExtender(val df: DataFrame) {
-    def sketch = new SparkSketches(df)
+    def sketch = new implicits(df)
   }
 }
