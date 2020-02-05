@@ -7,7 +7,7 @@ import scala.util.Random
 
 abstract class CountMinSketch[T](val depth: Int, val width: Int, val seed: Int) extends Sketch[CountMinSketch[T], T] {
   require(
-    (Math.log(width)/Math.log(2)).isWhole(),
+    (Math.log(width)/Math.log(2)).isWhole,
     s"Width must be a power of 2, $width is not a power of 2"
   )
   require(depth >= 1)

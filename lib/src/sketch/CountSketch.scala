@@ -15,8 +15,8 @@ import scala.util.hashing.MurmurHash3
   */
 abstract class CountSketch[T](val depth: Int, val width: Int, val seed: Int) extends Sketch[CountSketch[T], T] {
   require(
-    (Math.log(width)/Math.log(2)).isWhole(),
-    s"Parameter b must be a power of 2, $width is not a power of 2"
+    (Math.log(width)/Math.log(2)).isWhole,
+    s"Width must be a power of 2, $width is not a power of 2"
   )
   require(depth >= 1)
   require(width >= 2)

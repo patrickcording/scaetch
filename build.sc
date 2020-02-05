@@ -5,11 +5,11 @@ import mill.scalalib._
 
 
 trait SketchLibModule extends ScalaModule {
-  def scalaVersion = "2.11.12"
+  def scalaVersion = "2.12.10"
 }
 
 object agent extends ScalaModule {
-  def scalaVersion = "2.11.12"
+  def scalaVersion = "2.12.10"
 }
 
 object lib extends SketchLibModule {
