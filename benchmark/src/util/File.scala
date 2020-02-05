@@ -3,7 +3,6 @@ package util
 import java.nio.file.{Files, Paths}
 
 import scala.io.Source
-import scala.util.Random
 
 object File {
   def readLongs(path: String): Iterator[Long] = {
@@ -17,7 +16,4 @@ object File {
   def exists(path: String): Boolean = {
     Files.exists(Paths.get(path))
   }
-
-  val r = new Random(10)
-  r.nextDouble()
 }
