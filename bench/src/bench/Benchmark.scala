@@ -14,7 +14,7 @@ object Benchmark extends App {
     List(
       (CountSketch[String](depth, width, SEED), "CountSketch"),
       (CountMinSketch[String](depth, width, SEED), "CountMinSketch"),
-      (CountMinSketch[String](depth, width, SEED, true), "CountMinSketch w CS"),
+      (CountMinSketch[String](depth, width, SEED, true), "CountMinSketch with CU"),
       (SparkCountMinSketchWrapper[String](depth, width, SEED), "SparkCountMinSketchWrapper"),
       (new BufferedSketch(CountSketch[String](depth, width, SEED), bufferSize), "BufferedCountSketch"),
       (new BufferedSketch(CountMinSketch[String](depth, width, SEED), bufferSize), "BufferedCountMinSketch")
