@@ -31,7 +31,7 @@ object spark extends SketchLibModule {
 }
 
 object bench extends SketchLibModule {
-  override def moduleDeps = Seq(lib, agent)
+  override def moduleDeps = Seq(lib, spark, agent)
 
   override def repositories = super.repositories ++ Seq(
     MavenRepository("https://oss.sonatype.org/content/repositories/snapshots")
