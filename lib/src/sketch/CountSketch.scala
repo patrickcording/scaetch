@@ -1,7 +1,8 @@
 package sketch
 
+import net.openhft.hashing.LongHashFunction
+
 import scala.util.Random
-import scala.util.hashing.MurmurHash3
 
 /**
   * An implementation of the CountSketch by Charikar, Chen, and Farach-Colton
@@ -18,12 +19,12 @@ abstract class CountSketch[T](val depth: Int, val width: Int, val seed: Int) ext
     (Math.log(width)/Math.log(2)).isWhole,
     s"Width must be a power of 2, $width is not a power of 2"
   )
-  require(depth >= 1)
-  require(width >= 2)
+  require(depth >= 1 && depth <= 64)
+  require(width >= 2 && width <= Math.pow(2, 16).toInt)
 
   protected val buckets = Array.ofDim[Int](depth)
-  protected val counters = Array.ofDim[Int](depth)
-  protected val shift = 32-(Math.log(width)/Math.log(2)).toInt
+  protected var counters = 0L
+  protected val shift = 64-(Math.log(width)/Math.log(2)).toInt
   private val C = Array.ofDim[Long](depth, width)
 
   def setBucketsAndCounters(elem: T)
@@ -38,7 +39,8 @@ abstract class CountSketch[T](val depth: Int, val width: Int, val seed: Int) ext
     val values = Array.ofDim[Long](depth)
     var i = 0
     while (i < depth) {
-      values(i) = C(i)(buckets(i)) * counters(i)
+      if ((counters >>> depth & 1L) == 0) values(i) = C(i)(buckets(i))
+      else values(i) = -C(i)(buckets(i))
       i += 1
     }
     values.sorted.apply(depth/2)
@@ -58,7 +60,8 @@ abstract class CountSketch[T](val depth: Int, val width: Int, val seed: Int) ext
     setBucketsAndCounters(elem)
     var i = 0
     while (i < depth) {
-      C(i)(buckets(i)) += occurrences * counters(i)
+      if ((counters >>> depth & 1L) == 0) C(i)(buckets(i)) += occurrences
+      else C(i)(buckets(i)) -= occurrences
       i += 1
     }
     this
@@ -103,18 +106,19 @@ object CountSketch {
 
   trait StringHashing extends CountSketch[String] {
     override def setBucketsAndCounters(elem: String): Unit = {
-      val hash1 = MurmurHash3.stringHash(elem, seed)
-      val hash2 = MurmurHash3.stringHash(elem, hash1)
-      val hash3 = MurmurHash3.stringHash(elem, hash2)
-      val hash4 = MurmurHash3.stringHash(elem, hash3)
+      val h1 = LongHashFunction.xx(seed)
+      val v1 = h1.hashChars(elem)
+      val h2 = LongHashFunction.xx(v1)
+      val v2 = h2.hashChars(elem)
+      val a = (v1 & 0xFFFFFFFFL).toInt
+      val b = (v1 >>> 32).toInt
+
       var i = 0
       while (i < depth) {
-        val h1 = hash1 + i*hash2
-        val h2 = hash3 + i*hash4
-        buckets(i) = h1 >>> shift
-        counters(i) = if ((h2 & 1) == 0) -1 else 1
+        buckets(i) = (a*i + b) >>> shift
         i += 1
       }
+      counters = v2
     }
   }
 
@@ -122,18 +126,16 @@ object CountSketch {
     private val r = new Random(seed)
     private val A1 = Array.fill[Long](depth)(r.nextLong())
     private val B1 = Array.fill[Long](depth)(r.nextLong())
-    private val A2 = Array.fill[Long](depth)(r.nextLong())
-    private val B2 = Array.fill[Long](depth)(r.nextLong())
+    private val A2 = r.nextLong()
+    private val B2 = r.nextLong()
 
     override def setBucketsAndCounters(elem: Long): Unit = {
       var i = 0
       while (i < depth) {
-        val h1 = A1(i)*elem + B1(i)
-        val h2 = A2(i)*elem + B2(i)
-        buckets(i) = h1.toInt >>> shift
-        counters(i) = if ((h2 & 1) == 0) -1 else 1
+        buckets(i) = ((A1(i)*elem + B1(i)) >>> shift).toInt
         i += 1
       }
+      counters = A2*elem + B2
     }
   }
 }
