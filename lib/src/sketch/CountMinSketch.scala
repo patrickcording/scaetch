@@ -129,8 +129,7 @@ object CountMinSketch {
     override def setBuckets(elem: Long): Unit = {
       var i = 0
       while (i < depth) {
-        val h1 = A1(i)*elem + B1(i)
-        buckets(i) = h1.toInt >>> shift
+        buckets(i) = (A1(i)*elem + B1(i) >>> shift).toInt
         i += 1
       }
     }
