@@ -32,6 +32,7 @@ object spark extends SketchLibModule {
 
 object bench extends SketchLibModule {
   override def moduleDeps = Seq(lib, spark, agent)
+  override def mainClass = Some("bench.Benchmark")
 
   override def repositories = super.repositories ++ Seq(
     MavenRepository("https://oss.sonatype.org/content/repositories/snapshots")
@@ -40,6 +41,8 @@ object bench extends SketchLibModule {
   override def forkArgs = Seq("-javaagent:./Agent.jar")
 
   override def ivyDeps = Agg(
-    ivy"com.storm-enroute::scalameter-core:0.19-SNAPSHOT"
+    ivy"com.storm-enroute::scalameter-core:0.19-SNAPSHOT",
+    ivy"org.apache.commons:commons-rng-core:1.3",
+    ivy"org.apache.commons:commons-rng-sampling:1.3"
   )
 }

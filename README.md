@@ -10,6 +10,6 @@ An implementation of the Count and CountMin sketches in Scala.
 
 [x] Update hash function of Count sketch
 
-[ ] Fix Long hashing
+[x] Fix Long hashing
 
 [ ] Generate an include some test data (IPs)
