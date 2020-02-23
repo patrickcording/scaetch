@@ -12,12 +12,12 @@ object Benchmark extends App {
 
   private def prepareSketches(depth: Int, width: Int, bufferSize: Int) = {
     List(
-      (CountSketch[String](depth, width, SEED), "CountSketch"),
-      (CountMinSketch[String](depth, width, SEED), "CountMinSketch"),
-      (CountMinSketch[String](depth, width, SEED, true), "CountMinSketch with CU"),
-      (SparkCountMinSketchWrapper[String](depth, width, SEED), "SparkCountMinSketchWrapper"),
-      (new BufferedSketch(CountSketch[String](depth, width, SEED), bufferSize), "BufferedCountSketch"),
-      (new BufferedSketch(CountMinSketch[String](depth, width, SEED), bufferSize), "BufferedCountMinSketch")
+      (CountSketch(depth, width, SEED), "CountSketch"),
+      (CountMinSketch(depth, width, SEED), "CountMinSketch"),
+      (CountMinSketch.withConservativeUpdates(depth, width, SEED), "CountMinSketch with CU"),
+      (SparkCountMinSketchWrapper(depth, width, SEED), "SparkCountMinSketchWrapper"),
+      (new BufferedSketch(CountSketch(depth, width, SEED), bufferSize), "BufferedCountSketch"),
+      (new BufferedSketch(CountMinSketch(depth, width, SEED), bufferSize), "BufferedCountMinSketch")
     )
   }
 
@@ -44,7 +44,7 @@ object Benchmark extends App {
         for (sketch <- sketches) {
           val t = timer.measure {
             for (elem <- data) {
-              sketch._1.add(elem)
+              sketch._1.add(elem, 1L)
             }
           }.value
           val throughput = numLines / t
@@ -75,7 +75,7 @@ object Benchmark extends App {
         val sketches = prepareSketches(depth, width, bufferSize)
         for (sketch <- sketches) {
           for (elem <- data) {
-            sketch._1.add(elem)
+            sketch._1.add(elem, 1L)
           }
           sketch._1.estimate("flush!")
           val size = DeepSize(sketch._1)
@@ -109,7 +109,7 @@ object Benchmark extends App {
         val sketches = prepareSketches(depth, width, bufferSize)
         for (sketch <- sketches) {
           for (elem <- data) {
-            sketch._1.add(elem)
+            sketch._1.add(elem, 1L)
           }
           // Compute RMSE
           val rmse = Math.sqrt(actualCounts.map { case (k, v) => Math.pow(sketch._1.estimate(k) - v, 2) }.sum/numLines)

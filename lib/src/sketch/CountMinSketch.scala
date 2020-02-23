@@ -100,6 +100,10 @@ class CountMinSketch(val depth: Int, val width: Int, val seed: Int) extends Sket
 }
 
 object CountMinSketch {
+  def apply(depth: Int, width: Int, seed: Int) = new CountMinSketch(depth, width, seed)
+  def withConservativeUpdates(depth: Int, width: Int, seed: Int) =
+    new CountMinSketch(depth, width, seed) with ConservativeUpdates
+
   trait ConservativeUpdates extends CountMinSketch {
     protected override def addInternal(count: Long) = {
       val updateValue = count + super.estimateInternal()
@@ -125,7 +129,4 @@ object CountMinSketch {
       this
     }
   }
-
-
-
 }
