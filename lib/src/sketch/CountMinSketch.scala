@@ -15,29 +15,34 @@ class CountMinSketch(val depth: Int, val width: Int, val seed: Int) extends Sket
 
   protected val C = Array.ofDim[Long](depth, width)
   protected val buckets = Array.ofDim[Int](depth)
-  final protected val shift = 32-(Math.log(width)/Math.log(2)).toInt
+  final protected val intShift = 32-(Math.log(width)/Math.log(2)).toInt
+  final protected val longShift = 64-(Math.log(width)/Math.log(2)).toInt
 
   private val h = LongHashFunction.xx(seed)
-  private val r = new Random(seed)
-  private val A1 = Array.fill[Long](depth)(r.nextLong())
-  private val B1 = Array.fill[Long](depth)(r.nextLong())
+  private val A1 = h.hashLong(1)
+  private val A2 = h.hashLong(2)
+  private val B1 = h.hashLong(3)
+  private val B2 = h.hashLong(4)
 
   protected def setBuckets(elem: String) = {
     val v = h.hashChars(elem)
-    val hash1 = (v & 0xFFFFFFFFL).toInt
-    val hash2 = (v >>> 32).toInt
+    val a = (v >>> 32).toInt
+    val b = (v & 0xFFFFFFFFL).toInt
 
     var i = 0
     while (i < depth) {
-      buckets(i) = (hash1 + i*hash2) >>> shift
+      buckets(i) = (a*i + b) >>> intShift
       i += 1
     }
   }
 
   protected def setBuckets(elem: Long) = {
+    val a = (A1*elem + B1).toInt
+    val b = (A2*elem + B2).toInt
+
     var i = 0
     while (i < depth) {
-      buckets(i) = (A1(i)*elem + B1(i) >>> shift).toInt
+      buckets(i) = (a*i + b) >>> intShift
       i += 1
     }
   }
