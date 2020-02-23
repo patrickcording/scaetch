@@ -1,8 +1,13 @@
 package sketch
 
-abstract class Sketch[A, T] extends Serializable {
-  def add(elem: T): A
-  def add(elem: T, count: Long): A
+trait SketchUpdateStateFunction[A, T] {
+  def apply(elem: T, sketchInstance: A)
+}
+
+abstract class Sketch[A] extends Serializable {
+  def add[T](elem: T, count: Long)(implicit updateFunction: SketchUpdateStateFunction[A, T]): A
+  def estimate[T](elem: T)(implicit updateFunction: SketchUpdateStateFunction[A, T]): Long
   def merge(other: A): A
-  def estimate(elem: T): Long
+
+//  def add[T](elem: T)(implicit updateFunction: T => Unit): A = add(elem, 1L)
 }

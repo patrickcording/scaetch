@@ -16,6 +16,7 @@ object lib extends SketchLibModule {
   override def ivyDeps = Agg(
     ivy"net.openhft:zero-allocation-hashing:0.10.1"
   )
+  override def mainClass = Some("sketch.Runner")
 }
 
 object spark extends SketchLibModule {

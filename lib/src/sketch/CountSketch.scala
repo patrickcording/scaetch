@@ -14,7 +14,8 @@ import scala.util.Random
   * @param width the number of counters in each hash table. Has to be a power of two.
   * @param seed the seed for chosing the hash functions used by the algorithm.
   */
-abstract class CountSketch[T](val depth: Int, val width: Int, val seed: Int) extends Sketch[CountSketch[T], T] {
+class CountSketch(val depth: Int, val width: Int, val seed: Int)
+  extends Sketch[CountSketch] {
   require(
     (Math.log(width)/Math.log(2)).isWhole,
     s"Width must be a power of 2, $width is not a power of 2"
@@ -27,15 +28,27 @@ abstract class CountSketch[T](val depth: Int, val width: Int, val seed: Int) ext
   protected val shift = 64-(Math.log(width)/Math.log(2)).toInt
   private val C = Array.ofDim[Long](depth, width)
 
-  def setBucketsAndCounters(elem: T)
+  private val r = new Random(seed)
+  private val A1 = Array.fill[Long](depth)(r.nextLong())
+  private val B1 = Array.fill[Long](depth)(r.nextLong())
+  private val A2 = r.nextLong()
+  private val B2 = r.nextLong()
 
-  /**
-    * Estimate the frequency of an element.
-    * @param elem
-    * @return estimated frequency
-    */
-  override def estimate(elem: T): Long = {
-    setBucketsAndCounters(elem)
+  override def add[T](elem: T, count: Long)
+                     (implicit updateFunction: SketchUpdateStateFunction[CountSketch, T]): CountSketch = {
+    updateFunction(elem, this)
+    var j = 0
+    while (j < depth) {
+      if ((counters >>> depth & 1L) == 0) C(j)(buckets(j)) += count
+      else C(j)(buckets(j)) -= count
+      j += 1
+    }
+    this
+  }
+
+  override def estimate[T](elem: T)
+                          (implicit updateFunction: SketchUpdateStateFunction[CountSketch, T]): Long = {
+    updateFunction(elem, this)
     val values = Array.ofDim[Long](depth)
     var i = 0
     while (i < depth) {
@@ -47,32 +60,11 @@ abstract class CountSketch[T](val depth: Int, val width: Int, val seed: Int) ext
   }
 
   /**
-    * Add a data point to the CountSketch.
-    * @param data
-    * @return this CountSketch
-    */
-  override def add(elem: T): CountSketch[T] = {
-    add(elem, 1)
-    this
-  }
-
-  override def add(elem: T, occurrences: Long): CountSketch[T] = {
-    setBucketsAndCounters(elem)
-    var i = 0
-    while (i < depth) {
-      if ((counters >>> depth & 1L) == 0) C(i)(buckets(i)) += occurrences
-      else C(i)(buckets(i)) -= occurrences
-      i += 1
-    }
-    this
-  }
-
-  /**
     * Merge this CountSketch with `other` CountSketch.
     * @param other
     * @return
     */
-  override def merge(other: CountSketch[T]): CountSketch[T] = {
+  override def merge(other: CountSketch): CountSketch = {
     if (depth == other.depth && width == other.width && seed == other.seed) {
       for (i <- 0 until depth; j <- 0 until width) {
         C(i)(j) += other.C(i)(j)
@@ -93,20 +85,13 @@ abstract class CountSketch[T](val depth: Int, val width: Int, val seed: Int) ext
 }
 
 object CountSketch {
-  def apply[T](depth: Int, width: Int, seed: Int)
-              (implicit sk: (Int, Int, Int) => CountSketch[T]): CountSketch[T] = sk(depth, width, seed)
+  def apply(depth: Int, width: Int, seed: Int) = new CountSketch(depth, width, seed)
 
-  implicit def stringCountSketch(depth: Int, width: Int, seed: Int): CountSketch[String] = {
-    new CountSketch[String](depth, width, seed) with StringHashing
-  }
+  implicit object StringCountSketchStateUpdateFunction
+    extends SketchUpdateStateFunction[CountSketch, String]{
 
-  implicit def longCountSketch(depth: Int, width: Int, seed: Int): CountSketch[Long] = {
-    new CountSketch[Long](depth, width, seed) with LongHashing
-  }
-
-  trait StringHashing extends CountSketch[String] {
-    override def setBucketsAndCounters(elem: String): Unit = {
-      val h1 = LongHashFunction.xx(seed)
+    override def apply(elem: String, instance: CountSketch) = {
+      val h1 = LongHashFunction.xx(instance.seed)
       val v1 = h1.hashChars(elem)
       val h2 = LongHashFunction.xx(v1)
       val v2 = h2.hashChars(elem)
@@ -114,28 +99,26 @@ object CountSketch {
       val b = (v1 >>> 32).toInt
 
       var i = 0
-      while (i < depth) {
-        buckets(i) = (a*i + b) >>> shift
+      while (i < instance.depth) {
+        instance.buckets(i) = (a*i + b) >>> instance.shift
         i += 1
       }
-      counters = v2
+      instance.counters = v2
     }
   }
 
-  trait LongHashing extends CountSketch[Long] {
-    private val r = new Random(seed)
-    private val A1 = Array.fill[Long](depth)(r.nextLong())
-    private val B1 = Array.fill[Long](depth)(r.nextLong())
-    private val A2 = r.nextLong()
-    private val B2 = r.nextLong()
+  implicit object LongCountSketchStateUpdateFunction
+    extends SketchUpdateStateFunction[CountSketch, Long]{
 
-    override def setBucketsAndCounters(elem: Long): Unit = {
+    override def apply(elem: Long, instance: CountSketch) = {
       var i = 0
-      while (i < depth) {
-        buckets(i) = ((A1(i)*elem + B1(i)) >>> shift).toInt
+      while (i < instance.depth) {
+        instance.buckets(i) = ((instance.A1(i)*elem + instance.B1(i)) >>> instance.shift).toInt
         i += 1
       }
-      counters = A2*elem + B2
+      instance.counters = instance.A2*elem + instance.B2
     }
   }
+
+
 }
