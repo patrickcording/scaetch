@@ -13,3 +13,7 @@ An implementation of the Count and CountMin sketches in Scala.
 [x] Fix Long hashing
 
 [ ] Generate an include some test data (IPs)
+
+[ ] Make it easy to extend with more types
+
+[ ] Add convenience method for adding 1 element

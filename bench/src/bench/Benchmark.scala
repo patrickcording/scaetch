@@ -34,7 +34,7 @@ object Benchmark extends App {
       .withWarmer { new Warmer.Default }
       .withMeasurer { new Measurer.IgnoringGC }
 
-    val data = File.readStrings(fileName).toList
+    val data = File.readLongs(fileName).toList
     val numLines = data.length
 
     for (depth <- depths) {
