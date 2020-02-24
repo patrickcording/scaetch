@@ -1,23 +1,23 @@
 package bench
 
-import sketch.{BufferedSketch, CountMinSketch, CountSketch, SparkCountMinSketchWrapper}
+import hash.{LongHashFunctionSimulator, StringHashFunctionSimulator}
+import org.scalameter._
+import sketch.{CountMinSketch, CountSketch, SparkCountMinSketchWrapper}
 import util._
 
 import scala.collection.mutable
-import org.scalameter._
 
 
 object Benchmark extends App {
-  val SEED = 0
 
   private def prepareSketches(depth: Int, width: Int, bufferSize: Int) = {
     List(
-      (CountSketch(depth, width, SEED), "CountSketch"),
-      (CountMinSketch(depth, width, SEED), "CountMinSketch"),
-      (CountMinSketch.withConservativeUpdates(depth, width, SEED), "CountMinSketch with CU"),
-      (SparkCountMinSketchWrapper(depth, width, SEED), "SparkCountMinSketchWrapper"),
-      (new BufferedSketch(CountSketch(depth, width, SEED), bufferSize), "BufferedCountSketch"),
-      (new BufferedSketch(CountMinSketch(depth, width, SEED), bufferSize), "BufferedCountMinSketch")
+      (CountSketch(depth, width), "CountSketch"),
+      (CountMinSketch(depth, width), "CountMinSketch"),
+      (CountMinSketch.withConservativeUpdates(depth, width), "CountMinSketch with CU"),
+      (SparkCountMinSketchWrapper(depth, width, 42), "SparkCountMinSketchWrapper")
+//      (new BufferedSketch(CountSketch(depth, width, SEED), bufferSize), "BufferedCountSketch"),
+//      (new BufferedSketch(CountMinSketch(depth, width, SEED), bufferSize), "BufferedCountMinSketch")
     )
   }
 
@@ -29,6 +29,9 @@ object Benchmark extends App {
     println("----------------------------------------------")
     println("Running throughput comparison (add ops/second)")
     println("----------------------------------------------")
+
+    implicit val longHashFunction = new LongHashFunctionSimulator(42)
+    implicit val stringHashFunction = new StringHashFunctionSimulator(42)
 
     val timer = config(Key.exec.benchRuns -> 5, Key.verbose -> false)
       .withWarmer { new Warmer.Default }
@@ -66,6 +69,9 @@ object Benchmark extends App {
     println("Running memory comparison (bytes)")
     println("---------------------------------")
 
+    implicit val longHashFunction = new LongHashFunctionSimulator(42)
+    implicit val stringHashFunction = new StringHashFunctionSimulator(42)
+
     val data = File.readStrings(fileName).toList
     val numLines = data.length
 
@@ -96,6 +102,9 @@ object Benchmark extends App {
     println("-----------------------------------------------------")
     println("Running precision comparison (Root Mean Square Error)")
     println("-----------------------------------------------------")
+
+    implicit val longHashFunction = new LongHashFunctionSimulator(42)
+    implicit val stringHashFunction = new StringHashFunctionSimulator(42)
 
     val data = File.readStrings(fileName).toList
     val numLines = data.length
