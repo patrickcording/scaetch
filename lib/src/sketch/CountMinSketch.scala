@@ -19,8 +19,7 @@ class CountMinSketch(val depth: Int, val width: Int) extends Sketch[CountMinSket
 
     var i = 0
     while (i < depth) {
-      val bucket = hash.next() >>> shift
-      C(i)(bucket) += count
+      C(i)(hash.hash(i) >>> shift) += count
       i += 1
     }
     this
@@ -32,8 +31,7 @@ class CountMinSketch(val depth: Int, val width: Int) extends Sketch[CountMinSket
     var i = 0
     var min = Long.MaxValue
     while (i < depth) {
-      val bucket = hash.next() >>> shift
-      min = Math.min(min, C(i)(bucket))
+      min = Math.min(min, C(i)(hash.hash(i) >>> shift))
       i += 1
     }
     min
@@ -67,7 +65,7 @@ object CountMinSketch {
 
       var i = 0
       while (i < depth) {
-        val bucket = hash.next() >>> shift
+        val bucket = hash.hash(i) >>> shift
         C(i)(bucket) = Math.max(C(i)(bucket), updateValue)
         i += 1
       }

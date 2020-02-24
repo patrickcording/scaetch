@@ -25,11 +25,11 @@ class CountSketch(val depth: Int, val width: Int) extends Sketch[CountSketch] {
   override def add[T](elem: T, count: Long)(implicit hash: HashFunctionSimulator[T]): CountSketch = {
     hash.set(elem)
 
-    val counters = hash.next() >>> shift
+    val counters = hash.hash(-1) >>> shift
 
     var i = 0
     while (i < depth) {
-      val bucket = hash.next() >>> shift
+      val bucket = hash.hash(i) >>> shift
       if ((counters >>> depth & 1L) == 0) C(i)(bucket) += count
       else C(i)(bucket) -= count
       i += 1
@@ -40,11 +40,11 @@ class CountSketch(val depth: Int, val width: Int) extends Sketch[CountSketch] {
   override def estimate[T](elem: T)(implicit hash: HashFunctionSimulator[T]): Long = {
     hash.set(elem)
     val values = Array.ofDim[Long](depth)
-    val counters = hash.next() >>> shift
+    val counters = hash.hash(-1) >>> shift
 
     var i = 0
     while (i < depth) {
-      val bucket = hash.next() >>> shift
+      val bucket = hash.hash(i) >>> shift
       if ((counters >>> depth & 1L) == 0) values(i) = C(i)(bucket)
       else values(i) = -C(i)(bucket)
       i += 1

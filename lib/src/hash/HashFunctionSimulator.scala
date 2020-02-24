@@ -5,13 +5,10 @@ import net.openhft.hashing.LongHashFunction
 trait HashFunctionSimulator[T] {
   protected var a = 0
   protected var b = 0
-  protected var i = 0L
 
   def set(x: T): Unit
-  def next(): Int = {
-    val nextVal = (a*i + b).toInt
-    i = i + 1
-    nextVal
+  def hash(i: Int): Int = {
+    a*i + b
   }
 }
 
@@ -25,7 +22,6 @@ class LongHashFunctionSimulator(seed: Long) extends HashFunctionSimulator[Long] 
   override def set(x: Long): Unit = {
     a = (A1*x + B1).toInt
     b = (A2*x + B2).toInt
-    i = 0L
   }
 }
 
@@ -36,6 +32,5 @@ class StringHashFunctionSimulator(seed: Long) extends HashFunctionSimulator[Stri
     val v = h.hashChars(x)
     a = (v >>> 32).toInt
     b = (v & 0xFFFFFFFFL).toInt
-    i = 0L
   }
 }
