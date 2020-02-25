@@ -2,59 +2,63 @@ package sketch
 
 import hash.HashFunctionSimulator
 
-class SimpleHashMap[A](size: Int) {
-  private val table = Array.fill(size)(List.empty[(Any, (Long => A, Long))])
-  private var inserts = 0
-  private var sizeHint = 0
+import scala.collection.mutable
+
+class SimpleHashMap[A](capacity: Int) {
+  private val table: Array[Option[(Any, (Long => A, Long))]] = Array.fill(capacity)(None)
+  private var size = 0
+  private var misses = 0
+  private val shift = 32 - (Math.log(capacity)/Math.log(2.0)).toInt
+//  private val alive = mutable.BitSet
 
   def clear() = {
     var i = 0
-    while (i < table.size) {
-      table(i) = List.empty[(Any, (Long => A, Long))]
+    while (i < capacity) {
+      table(i) = None
       i += 1
     }
-    inserts = 0
-    sizeHint = 0
+    size = 0
   }
 
-  private def incrementOrAddInternal(elem: (Any, (Long => A, Long)),
-                                     ch: List[(Any, (Long => A, Long))]): List[(Any, (Long => A, Long))] = ch match {
-    case h :: tail if h._1 == elem._1 => (elem._1, (elem._2._1, elem._2._2 + h._2._2)) :: tail
-    case h :: tail => h :: incrementOrAddInternal(elem, tail)
-    case Nil => List(elem)
-  }
+  def incrementOrAdd[T](key: T, sketch: Sketch[A], hash: HashFunctionSimulator[T], increment: Long) = {
+    hash.set(key)
+    var i = hash.hash(0) >>> shift
+    var it = 0
 
-  def incrementOrAdd(key: Any, countFunction: Long => A, increment: Long) = {
-    val index = key.## % size
-    val chain = table(index)
-    table(index) = incrementOrAddInternal((key, (countFunction, increment)), chain)
-    inserts += 1
-    if (inserts > size) {
-      sizeHint = table.map(_.length).sum
-      inserts = 0
+    while(table(i).isDefined && table(i).get._1 != key) {
+      i = hash.hash(it) >>> shift
+      it += 1
+    }
+
+    val countFunction = (c: Long) => sketch.add(key, c)(hash)
+    if (table(i).isEmpty) {
+      table(i) = Some((key, (countFunction, increment)))
+      size += 1
+    } else {
+      table(i) = Some((key, (countFunction, table(i).get._2._2 + increment)))
     }
   }
 
-  def get() = {
-    table.flatten
-  }
-
-  def getSizeHint() = sizeHint
+  def get() = table
+  def getSize() = size
 }
 
 class BufferedSketch[A <: Sketch[A]](val sketch: A, val bufferSize: Int)
   extends Sketch[BufferedSketch[A]] with Serializable {
 
-  private val buffer = new SimpleHashMap[A](bufferSize/10)
+  private val buffer = new SimpleHashMap[A](bufferSize)
 
   def flush() = {
-    buffer.get.foreach { case (_, (f, c)) => f(c) }
+    buffer.get.foreach {
+      case Some((_, (f, c))) => f(c)
+      case None =>
+    }
     buffer.clear()
   }
 
   override def add[T](elem: T, count: Long)(implicit hash: HashFunctionSimulator[T]): BufferedSketch[A] = {
-    buffer.incrementOrAdd(elem, (c: Long) => sketch.add(elem, c), 1L)
-    if (buffer.getSizeHint() >= bufferSize) {
+    buffer.incrementOrAdd(elem, sketch, hash, 1L)
+    if (buffer.getSize() >= bufferSize/2) {
       flush()
     }
     this
