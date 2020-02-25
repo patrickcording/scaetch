@@ -2,7 +2,7 @@ package bench
 
 import hash.{LongHashFunctionSimulator, StringHashFunctionSimulator}
 import org.scalameter._
-import sketch.{CountMinSketch, CountSketch, SparkCountMinSketchWrapper}
+import sketch.{BufferedSketch, CountMinSketch, CountSketch, SparkCountMinSketchWrapper}
 import util._
 
 import scala.collection.mutable
@@ -12,12 +12,12 @@ object Benchmark extends App {
 
   private def prepareSketches(depth: Int, width: Int, bufferSize: Int) = {
     List(
-      (CountSketch(depth, width), "CountSketch"),
-      (CountMinSketch(depth, width), "CountMinSketch"),
-      (CountMinSketch.withConservativeUpdates(depth, width), "CountMinSketch with CU"),
-      (SparkCountMinSketchWrapper(depth, width, 42), "SparkCountMinSketchWrapper")
-//      (new BufferedSketch(CountSketch(depth, width, SEED), bufferSize), "BufferedCountSketch"),
-//      (new BufferedSketch(CountMinSketch(depth, width, SEED), bufferSize), "BufferedCountMinSketch")
+      (() => CountSketch(depth, width), "CountSketch"),
+      (() => CountMinSketch(depth, width), "CountMinSketch"),
+      (() => CountMinSketch.withConservativeUpdates(depth, width), "CountMinSketch with CU"),
+      (() => SparkCountMinSketchWrapper(depth, width, 42), "SparkCountMinSketchWrapper"),
+      (() => new BufferedSketch(CountSketch(depth, width), bufferSize), "BufferedCountSketch"),
+      (() => new BufferedSketch(CountMinSketch(depth, width), bufferSize), "BufferedCountMinSketch")
     )
   }
 
@@ -46,9 +46,12 @@ object Benchmark extends App {
         val sketches = prepareSketches(depth, width, bufferSize)
         for (sketch <- sketches) {
           val t = timer.measure {
+            val sk = sketch._1()
             for (elem <- data) {
-              sketch._1.add(elem, 1L)
+              sk.add(elem, 1L)
             }
+            // Estimate an arbitrary value to flush buffers
+            sk.estimate(0L)
           }.value
           val throughput = numLines / t
           results.update((sketch._2, width.toString), throughput)
@@ -80,11 +83,13 @@ object Benchmark extends App {
       for (width <- widths) {
         val sketches = prepareSketches(depth, width, bufferSize)
         for (sketch <- sketches) {
+          val sk = sketch._1()
           for (elem <- data) {
-            sketch._1.add(elem, 1L)
+            sk.add(elem, 1L)
           }
-          sketch._1.estimate("flush!")
-          val size = DeepSize(sketch._1)
+          // Estimate an arbitrary value to flush buffers
+          sk.estimate(0L)
+          val size = DeepSize(sk)
           results.update((sketch._2, width.toString), size)
         }
       }
@@ -117,11 +122,14 @@ object Benchmark extends App {
       for (width <- widths) {
         val sketches = prepareSketches(depth, width, bufferSize)
         for (sketch <- sketches) {
+          val sk = sketch._1()
           for (elem <- data) {
-            sketch._1.add(elem, 1L)
+            sk.add(elem, 1L)
           }
+          // Estimate an arbitrary value to flush buffers
+          sk.estimate(0L)
           // Compute RMSE
-          val rmse = Math.sqrt(actualCounts.map { case (k, v) => Math.pow(sketch._1.estimate(k) - v, 2) }.sum/numLines)
+          val rmse = Math.sqrt(actualCounts.map { case (k, v) => Math.pow(sk.estimate(k) - v, 2) }.sum/numLines)
           results.update((sketch._2, width.toString), rmse)
         }
       }
@@ -133,6 +141,6 @@ object Benchmark extends App {
 
   val benchmarkArgs = Args.validate(args)
   runThroughputBenchmark(benchmarkArgs.file, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
-  runPrecisionBenchmark(benchmarkArgs.file, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
-  runMemoryBenchmark(benchmarkArgs.file, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
+//  runPrecisionBenchmark(benchmarkArgs.file, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
+//  runMemoryBenchmark(benchmarkArgs.file, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
 }
