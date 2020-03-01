@@ -1,7 +1,7 @@
 package bench
 
-import hash.{LongHashFunctionSimulator, StringHashFunctionSimulator}
 import org.scalameter._
+import sketch.hash.{LongHashFunctionSimulator, StringHashFunctionSimulator}
 import sketch.{BufferedSketch, CountMinSketch, CountSketch, SparkCountMinSketchWrapper}
 import util._
 
@@ -37,7 +37,7 @@ object Benchmark extends App {
       .withWarmer { new Warmer.Default }
       .withMeasurer { new Measurer.IgnoringGC }
 
-    val data = File.readLongs(fileName).toList
+    val data = File.readStrings(fileName).toList
     val numLines = data.length
 
     for (depth <- depths) {

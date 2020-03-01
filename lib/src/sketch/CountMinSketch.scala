@@ -1,5 +1,7 @@
 package sketch
 
+import sketch.hash.HashFunctionSimulator
+
 
 class CountMinSketch(val depth: Int, val width: Int) extends Sketch[CountMinSketch] {
   require(
