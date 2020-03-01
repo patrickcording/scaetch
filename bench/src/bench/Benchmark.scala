@@ -1,7 +1,7 @@
 package bench
 
 import org.scalameter._
-import sketch.hash.{LongHashFunctionSimulator, StringHashFunctionSimulator}
+import sketch.hash.implicits._
 import sketch.{BufferedSketch, CountMinSketch, CountSketch, SparkCountMinSketchWrapper}
 import util._
 
@@ -29,9 +29,6 @@ object Benchmark extends App {
     println("----------------------------------------------")
     println("Running throughput comparison (add ops/second)")
     println("----------------------------------------------")
-
-    implicit val longHashFunction = new LongHashFunctionSimulator(42)
-    implicit val stringHashFunction = new StringHashFunctionSimulator(42)
 
     val timer = config(Key.exec.benchRuns -> 5, Key.verbose -> false)
       .withWarmer { new Warmer.Default }
@@ -72,9 +69,6 @@ object Benchmark extends App {
     println("Running memory comparison (bytes)")
     println("---------------------------------")
 
-    implicit val longHashFunction = new LongHashFunctionSimulator(42)
-    implicit val stringHashFunction = new StringHashFunctionSimulator(42)
-
     val data = File.readStrings(fileName).toList
     val numLines = data.length
 
@@ -107,9 +101,6 @@ object Benchmark extends App {
     println("-----------------------------------------------------")
     println("Running precision comparison (Root Mean Square Error)")
     println("-----------------------------------------------------")
-
-    implicit val longHashFunction = new LongHashFunctionSimulator(42)
-    implicit val stringHashFunction = new StringHashFunctionSimulator(42)
 
     val data = File.readStrings(fileName).toList
     val numLines = data.length
