@@ -1,9 +1,8 @@
-package util
+package ds
 
 import scala.collection.mutable
 
 class MaxList[T](size: Int) {
-
   private val elements = mutable.Map.empty[T, Int]
 
   def add(p: Int, data: T): MaxList[T] = {
@@ -16,10 +15,4 @@ class MaxList[T](size: Int) {
   }
 
   def get: Seq[T] = elements.toSeq.sortBy(-_._2).map(_._1).take(size)
-
-}
-object MaxList {
-
-  def empty[T](size: Int) = new MaxList[T](size)
-
 }
