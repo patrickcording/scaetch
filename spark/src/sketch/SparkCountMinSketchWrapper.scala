@@ -1,7 +1,5 @@
 package sketch
 
-import hash.HashFunctionSimulator
-
 
 class SparkCountMinSketchWrapper(val depth: Int, val width: Int, val seed: Int)
   extends Sketch[SparkCountMinSketchWrapper] {

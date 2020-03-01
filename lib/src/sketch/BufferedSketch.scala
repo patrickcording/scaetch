@@ -1,7 +1,5 @@
 package sketch
 
-import hash.HashFunctionSimulator
-
 import scala.collection.mutable
 
 class SimpleHashMap[A](capacity: Int) {

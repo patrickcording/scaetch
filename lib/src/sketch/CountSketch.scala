@@ -1,7 +1,5 @@
 package sketch
 
-import hash.HashFunctionSimulator
-
 /**
   * An implementation of the CountSketch by Charikar, Chen, and Farach-Colton
   * (`https://www.cs.rutgers.edu/~farach/pubs/FrequentStream.pdf`).

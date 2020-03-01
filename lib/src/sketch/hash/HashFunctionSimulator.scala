@@ -1,4 +1,4 @@
-package hash
+package sketch.hash
 
 import net.openhft.hashing.LongHashFunction
 
