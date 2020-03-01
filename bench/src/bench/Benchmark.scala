@@ -141,6 +141,6 @@ object Benchmark extends App {
 
   val benchmarkArgs = Args.validate(args)
   runThroughputBenchmark(benchmarkArgs.file, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
-//  runPrecisionBenchmark(benchmarkArgs.file, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
+  runPrecisionBenchmark(benchmarkArgs.file, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
 //  runMemoryBenchmark(benchmarkArgs.file, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
 }

@@ -24,6 +24,14 @@ object DataGenerator extends App {
 //  val randomZipf = (1 to n).map(_ => zipf.sample())
 //  File.writeToResources("long_zipf", randomZipf)
 
-  val sorted = (1 to n).map(_ => r.nextInt(range)).sorted.map(e => Array.fill(e)("a").mkString)
-  File.writeToResources("long_sorted", sorted)
+  val strLength = 100
+  def randomString = {
+    List.fill(strLength)(r.nextPrintableChar).mkString("")
+  }
+
+  val sorted = (1 to 1000).flatMap(_ => {
+    val str = randomString
+    List.fill(100)(str)
+  }).sorted
+  File.writeToResources("string_sorted", sorted)
 }
