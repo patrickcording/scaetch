@@ -1,7 +1,7 @@
-package sketch
+package scaetch.sketch
 
-import ds.FixedSizeHashMap
-import sketch.hash.HashFunctionSimulator
+import scaetch.ds.FixedSizeHashMap
+import scaetch.sketch.hash.HashFunctionSimulator
 
 
 class BufferedSketch[A <: Sketch[A]](val sketch: A, val bufferSize: Int)

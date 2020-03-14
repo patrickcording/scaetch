@@ -1,4 +1,4 @@
-package util
+package scaetch.util
 
 object Printer {
   /**

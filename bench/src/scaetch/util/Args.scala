@@ -1,4 +1,4 @@
-package util
+package scaetch.util
 
 import scala.util.{Failure, Try}
 

@@ -1,4 +1,4 @@
-package ds
+package scaetch.ds
 
 class FixedSizeHashMap[V](capacity: Int) {
   private val table: Array[Option[(Any, V)]] = Array.fill(capacity)(None)

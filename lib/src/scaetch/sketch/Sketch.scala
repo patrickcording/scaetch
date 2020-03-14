@@ -1,6 +1,6 @@
-package sketch
+package scaetch.sketch
 
-import sketch.hash.HashFunctionSimulator
+import scaetch.sketch.hash.HashFunctionSimulator
 
 abstract class Sketch[A] extends Serializable {
   def add[T](elem: T, count: Long)(implicit hash: HashFunctionSimulator[T]): A

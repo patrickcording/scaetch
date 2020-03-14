@@ -1,6 +1,6 @@
-package sketch
+package scaetch.sketch
 
-import sketch.hash.HashFunctionSimulator
+import scaetch.sketch.hash.HashFunctionSimulator
 
 /**
   * An implementation of the CountSketch by Charikar, Chen, and Farach-Colton

@@ -1,10 +1,12 @@
-package bench
+package scaetch.bench
 
 import org.scalameter._
-import sketch.hash.implicits._
-import sketch.{BufferedSketch, CountMinSketch, CountSketch, SparkCountMinSketchWrapper}
-import util._
+import scaetch.sketch.{BufferedSketch, CountMinSketch, CountSketch, SparkCountMinSketchWrapper}
+import scaetch.util.{Args, DeepSize, File, Printer}
+import scaetch.sketch.hash.implicits._
+import sketch.{CountMinSketch, CountSketch, SparkCountMinSketchWrapper}
 
+import util._
 import scala.collection.mutable
 
 

@@ -1,4 +1,4 @@
-package util
+package scaetch.util
 
 import java.io.{BufferedWriter, File, FileWriter}
 import java.nio.file.{Files, Paths}
@@ -22,7 +22,7 @@ object File {
   }
 
   def writeToResources[T](fileName: String, values: Seq[T]): Unit = {
-    val file = new File("bench/resources", fileName)
+    val file = new File("scaetch/bench/resources", fileName)
     val bw = new BufferedWriter(new FileWriter(file))
     for (v <- values) {
       bw.write(v.toString)

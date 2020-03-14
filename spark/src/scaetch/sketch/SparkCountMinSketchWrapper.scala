@@ -1,6 +1,6 @@
-package sketch
+package scaetch.sketch
 
-import sketch.hash.HashFunctionSimulator
+import scaetch.sketch.hash.HashFunctionSimulator
 
 
 class SparkCountMinSketchWrapper(val depth: Int, val width: Int, val seed: Int)

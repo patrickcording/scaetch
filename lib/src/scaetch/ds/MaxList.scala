@@ -1,4 +1,4 @@
-package ds
+package scaetch.ds
 
 import scala.collection.mutable
 

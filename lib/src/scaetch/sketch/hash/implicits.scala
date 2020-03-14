@@ -1,4 +1,4 @@
-package sketch.hash
+package scaetch.sketch.hash
 
 object implicits {
   implicit val longHashFunction = new LongHashFunctionSimulator(42)
