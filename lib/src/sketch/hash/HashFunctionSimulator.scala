@@ -49,13 +49,12 @@ class AnyHashFunctionSimulator(seed: Long) extends HashFunctionSimulator[Any] {
 
   override def set(x: Any): Unit = {
     x match {
-      case xs: String =>
-        stringHashFunctionSimulator.set(xs)
-        setState(stringHashFunctionSimulator.getState)
       case xl: Long =>
         longHashFunctionSimulator.set(xl)
         setState(longHashFunctionSimulator.getState)
-      case _ => throw new NotImplementedError("No hash function simulator found for type of input")
+      case xa =>
+        stringHashFunctionSimulator.set(xa.toString)
+        setState(stringHashFunctionSimulator.getState)
     }
   }
 }
