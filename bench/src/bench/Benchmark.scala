@@ -21,7 +21,7 @@ object Benchmark extends App {
     )
   }
 
-  def runThroughputBenchmark(fileName: String,
+  def runThroughputBenchmark(data: List[Any],
                              depths: List[Int],
                              widths: List[Int],
                              bufferSize: Int) = {
@@ -34,7 +34,6 @@ object Benchmark extends App {
       .withWarmer { new Warmer.Default }
       .withMeasurer { new Measurer.IgnoringGC }
 
-    val data = File.readStrings(fileName).toList
     val numLines = data.length
 
     for (depth <- depths) {
@@ -60,7 +59,7 @@ object Benchmark extends App {
     }
   }
 
-  def runMemoryBenchmark(fileName: String,
+  def runMemoryBenchmark(data: List[Any],
                          depths: List[Int],
                          widths: List[Int],
                          bufferSize: Int) = {
@@ -68,9 +67,6 @@ object Benchmark extends App {
     println("---------------------------------")
     println("Running memory comparison (bytes)")
     println("---------------------------------")
-
-    val data = File.readStrings(fileName).toList
-    val numLines = data.length
 
     for (depth <- depths) {
       val results = mutable.Map.empty[(String, String), Double]
@@ -93,7 +89,7 @@ object Benchmark extends App {
     }
   }
 
-  def runPrecisionBenchmark(fileName: String,
+  def runPrecisionBenchmark(data: List[Any],
                             depths: List[Int],
                             widths: List[Int],
                             bufferSize: Int) = {
@@ -102,7 +98,6 @@ object Benchmark extends App {
     println("Running precision comparison (Root Mean Square Error)")
     println("-----------------------------------------------------")
 
-    val data = File.readStrings(fileName).toList
     val numLines = data.length
 
     // Compute actual counts
@@ -131,7 +126,9 @@ object Benchmark extends App {
   }
 
   val benchmarkArgs = Args.validate(args)
-  runThroughputBenchmark(benchmarkArgs.file, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
-  runPrecisionBenchmark(benchmarkArgs.file, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
-//  runMemoryBenchmark(benchmarkArgs.file, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
+  val data = File.readAs(benchmarkArgs.file, benchmarkArgs.dataType).toList
+
+  runThroughputBenchmark(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
+  runPrecisionBenchmark(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
+  runMemoryBenchmark(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
 }

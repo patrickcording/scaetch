@@ -6,12 +6,15 @@ import java.nio.file.{Files, Paths}
 import scala.io.Source
 
 object File {
-  def readLongs(path: String): Iterator[Long] = {
-    Source.fromFile(path).getLines.map(_.toLong)
-  }
-
-  def readStrings(path: String): Iterator[String] = {
-    Source.fromFile(path).getLines.map(_.toString)
+  def readAs(path: String, dataType: String): Iterator[Any] = {
+    val lines = Source.fromFile(path).getLines
+    if (dataType == "string") {
+      lines.map(_.asInstanceOf[Any])
+    } else if (dataType == "long") {
+      lines.map(_.toLong.asInstanceOf[Any])
+    } else {
+      throw new UnsupportedOperationException(s"Can not read data as $dataType")
+    }
   }
 
   def exists(path: String): Boolean = {

@@ -68,7 +68,7 @@ object Args {
 
     val validDataType = (dataType: String) => {
       if (dataType == "long" || dataType == "string") dataType
-      else throw new IllegalArgumentException("datatype should 'long' or 'string'")
+      else throw new IllegalArgumentException("datatype should be 'long' or 'string'")
     }
 
     val validFile = (file: String) => {
