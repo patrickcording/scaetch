@@ -8,7 +8,7 @@ import scaetch.sketch.{BufferedSketch, CountMinSketch, CountSketch, Sketch}
 
 import scala.reflect.ClassTag
 
-class SketchDataFrameFunctions(df: DataFrame) {
+class DataFrameSketchFunctions(df: DataFrame) {
   def countSketch(column: Column,
                   depth: Int,
                   width: Int,
@@ -75,8 +75,8 @@ class SketchDataFrameFunctions(df: DataFrame) {
   }
 }
 
-object SketchDataFrameFunctions {
+object DataFrameSketchFunctions {
   implicit class DataFrameExtender(val df: DataFrame) {
-    def sketch = new SketchDataFrameFunctions(df)
+    def sketch = new DataFrameSketchFunctions(df)
   }
 }
