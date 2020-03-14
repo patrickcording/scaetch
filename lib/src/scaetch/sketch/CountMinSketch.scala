@@ -1,5 +1,6 @@
 package scaetch.sketch
 
+import scaetch.sketch.CountMinSketch.ConservativeUpdates
 import scaetch.sketch.hash.HashFunctionSimulator
 
 
@@ -53,11 +54,15 @@ class CountMinSketch(val depth: Int, val width: Int) extends Sketch[CountMinSket
       throw new Exception("Can't merge two sketches initialized with different parameters")
     }
   }
+
+  def withConservativeUpdates: CountMinSketch = {
+    val newSketch = new CountMinSketch(depth, width) with ConservativeUpdates
+    newSketch.merge(this)
+  }
 }
 
 object CountMinSketch {
   def apply(depth: Int, width: Int) = new CountMinSketch(depth, width)
-  def withConservativeUpdates(depth: Int, width: Int) = new CountMinSketch(depth, width) with ConservativeUpdates
 
   trait ConservativeUpdates extends CountMinSketch {
     override def add[T](elem: T, count: Long)(implicit hash: HashFunctionSimulator[T]): ConservativeUpdates = {

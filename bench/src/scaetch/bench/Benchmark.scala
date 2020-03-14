@@ -14,7 +14,7 @@ object Benchmark extends App {
     List(
       (() => CountSketch(depth, width), "CountSketch"),
       (() => CountMinSketch(depth, width), "CountMinSketch"),
-      (() => CountMinSketch.withConservativeUpdates(depth, width), "CountMinSketch with CU"),
+      (() => CountMinSketch(depth, width).withConservativeUpdates, "CountMinSketch with CU"),
       (() => SparkCountMinSketchWrapper(depth, width, 42), "SparkCountMinSketchWrapper"),
       (() => new BufferedSketch(CountSketch(depth, width), bufferSize), "BufferedCountSketch"),
       (() => new BufferedSketch(CountMinSketch(depth, width), bufferSize), "BufferedCountMinSketch")
