@@ -16,4 +16,6 @@ An implementation of the Count and CountMin sketches in Scala.
 
 [x] Make it easy to extend with more types
 
-[ ] Add convenience method for adding 1 element
+[x] Add convenience method for adding 1 element
+
+[ ] Fix Spark API
