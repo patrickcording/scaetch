@@ -72,7 +72,7 @@ object Args {
     }
 
     val validFile = (file: String) => {
-      if (File.exists(file)) file
+      if (FileUtil.exists(file)) file
       else throw new IllegalArgumentException("File does not exist")
     }
 

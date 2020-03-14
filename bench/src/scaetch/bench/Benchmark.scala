@@ -2,11 +2,9 @@ package scaetch.bench
 
 import org.scalameter._
 import scaetch.sketch.{BufferedSketch, CountMinSketch, CountSketch, SparkCountMinSketchWrapper}
-import scaetch.util.{Args, DeepSize, File, Printer}
+import scaetch.util.{Args, DeepSize, FileUtil, Printer}
 import scaetch.sketch.hash.implicits._
-import sketch.{CountMinSketch, CountSketch, SparkCountMinSketchWrapper}
 
-import util._
 import scala.collection.mutable
 
 
@@ -128,7 +126,7 @@ object Benchmark extends App {
   }
 
   val benchmarkArgs = Args.validate(args)
-  val data = File.readAs(benchmarkArgs.file, benchmarkArgs.dataType).toList
+  val data = FileUtil.readAs(benchmarkArgs.file, benchmarkArgs.dataType).toList
 
   runThroughputBenchmark(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
   runPrecisionBenchmark(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)

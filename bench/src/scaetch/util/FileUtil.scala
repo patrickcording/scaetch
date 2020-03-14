@@ -5,7 +5,7 @@ import java.nio.file.{Files, Paths}
 
 import scala.io.Source
 
-object File {
+object FileUtil {
   def readAs(path: String, dataType: String): Iterator[Any] = {
     val lines = Source.fromFile(path).getLines
     if (dataType == "string") {
