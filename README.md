@@ -1,58 +1,76 @@
 # Introduction
-**scaetch** is a Scala implementation of the [Count](https://www.cs.rutgers.edu/~farach/pubs/FrequentStream.pdf) 
-and [CountMin](https://7797b024-a-62cb3a1a-s-sites.googlegroups.com/site/countminsketch/cm-latin.pdf) sketches.
+**scætch** is a Scala implementation of the [Count](https://www.cs.rutgers.edu/~farach/pubs/FrequentStream.pdf) 
+and [CountMin](https://7797b024-a-62cb3a1a-s-sites.googlegroups.com/site/countminsketch/cm-latin.pdf) sketches for approximate counting in streams.
 
-The errors on estimates computed using these data structures are bounded in different 
-ways, essentially meaning that one sketch is not always better than the other. 
-The right choice depends on your data, requirements for performance, and allowed 
-error. This library contains a benchmark program to compare the two sketches for 
-different combinations of parameters and a specific dataset.
+It comes with three modules:
 
-To further evaluate which sketch to use, the library also includes functionality 
-for buffering elements before updating the sketches. This provides a trade-off between 
-the naive approach of keeping a map from elements to counts and using a sketch. 
-If you have enough memory to maintain a large enough buffer and elements arrive in 
-groups, this may give an increase in performance.
+- **lib**: The data structures.
+- **bench**: A benchmark program to compare the sketches.
+- **spark**: An API for Apache Spark.
 
-Finally, a well-known technique of conservative updating for improving the precision of 
-CountMin sketches is also available. This significantly slows down the processing time 
-of elements, but may improve the precision in practice.
+### lib
+The sketches are implemented with performance in mind. Most underlying data 
+structures are arrays and common Scala idioms, like immutability, are ignored. 
+That being said, since hashing is a performance bottleneck of the sketches,
+ the performance is mostly owed to [this dependency](https://github.com/OpenHFT/Zero-Allocation-Hashing) 
+ combined with an idea from [this paper](https://www.eecs.harvard.edu/~michaelm/postscripts/rsa2008.pdf).
+
+Moreover, the library comes with the ability to buffer elements before adding
+ them to the sketches (to further reduce the time spent hashing) and to apply
+  the *conservative update* trick (see [this paper]()) to the CountMin sketch 
+  for increased precision.
+
+### bench
+The benchmark program allows you to compare the two sketches on your own data
+ for many combinations of parameters. 
+ 
+The Count and CountMin sketches come 
+with different guarantees on the errors of the estimates they produce, and 
+CountMin is typically faster than Count. For some data sources you might 
+want to use buffering or conservative updates.
+ 
+In other words, there is no one sketch that is always the best. The benchmark
+will help you finding the one you need.
+
+### spark
+Two sketches can be computed independently and merged without sacrificing 
+precision. This is great for distributed computing. This modules exposes the 
+sketches in the simplest of ways. For example:
+
+```scala
+import scaetch.spark.DataFrameSketchFunctions._
+val cms = df.sketch.countMinSketch(col("colName"), 5, 1024, 42, false)
+```
+
+Will use the internal custom aggregation API to build a sketch over the 
+values of `colName` using Spark.
 
 # Running the benchmark
-You need [mill](https://github.com/lihaoyi/mill) to build the benchmark suite.
+You need [mill](https://github.com/lihaoyi/mill) to build the benchmark 
+module.
 
-First, we need to build an agent for the JVM. This is used to gather memory usage of the sketches in the benchmark.
+First, we need to build an [agent for the JVM](https://www.baeldung.com/java-size-of-object). 
+This is needed for getting the size of objects.
 
 ```bash
 mill agent.compile
 jar cmf ./agent/META-INF/MANIFEST.MF Agent.jar ./out/agent/compile/dest/classes/agent/Agent.class
 ```
 
-Then run:
+Now you can run the following.
 
 ```bash
 mill bench.run 5,10 128,1024 1000 string path/to/file
 ```
 
-This will launch the benchmark for several combinations of depth and width of the sketches. For the buffered sketches the buffer size is 1000.
+This will launch the benchmark for several combinations of depth and width 
+of the sketches. For the buffered sketches the buffer size is 1000.
 
-The data file is expected to contain one element per line. In this example each line is interpreted as a string. You may change this to `long` if each element in the data file can be parsed to an 64 bit integer.
+The data file is expected to contain one element per line. In this example 
+each line is interpreted as a string. You may change this to `long` if each 
+element in the data file can be parsed to a 64 bit integer.
 
-## Sketches
-The benchmark compares 6 data structures based on the Count and CountMin 
-sketches:
-
-- CountMinSketch
-- CountMinSketch with conservative updates
-- BufferedCountMinSketch
-- CountSketch
-- BufferedCountSketch
-- SparkCountMinSketchWrapper
-
-The SparkCountMinSketchWrapper is the implementation of the CountMin
-sketch available in the Spark repository included for reference.
-
-## Benchmark tests
+## Benchmarks
 The benchmark has three tests:
 1. A throughput comparison
 2. A precision comparison
@@ -163,7 +181,6 @@ val bufferedSketch = new BufferedSketch(cs, bufferSize)
 ```scala
 val cms = CountMinSketch(5, 512).withConservativeUpdates
 ```
-
 
 # Further work
 [ ] Implement heavy hitter algorithm
