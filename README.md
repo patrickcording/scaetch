@@ -35,14 +35,14 @@ will help you finding the one you need.
 ### spark
 Two sketches can be computed independently and merged without sacrificing 
 precision. This is great for distributed computing. This modules exposes the 
-sketches in the simplest of ways. For example:
+sketches in the simplest of ways. For example,
 
 ```scala
 import scaetch.spark.DataFrameSketchFunctions._
 val cms = df.sketch.countMinSketch(col("colName"), 5, 1024, 42, false)
 ```
 
-Will use the internal custom aggregation API to build a sketch over the 
+will use the internal custom aggregation API to build a sketch over the 
 values of `colName` using Spark.
 
 # Running the benchmark
@@ -182,8 +182,8 @@ val bufferedSketch = new BufferedSketch(cs, bufferSize)
 val cms = CountMinSketch(5, 512).withConservativeUpdates
 ```
 
-# Further work
-[ ] Implement heavy hitter algorithm
+# 
 
-[ ] Release artifact
+# Further work
+- Implement heavy hitter algorithm
 
