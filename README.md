@@ -1,12 +1,27 @@
 # Introduction
-**scaetch** is a Scala implementation of the Count and CountMin sketches.
+**scaetch** is a Scala implementation of the [Count](https://www.cs.rutgers.edu/~farach/pubs/FrequentStream.pdf) 
+and [CountMin](https://7797b024-a-62cb3a1a-s-sites.googlegroups.com/site/countminsketch/cm-latin.pdf) sketches.
 
+The errors on estimates computed using these data structures are bounded in different 
+ways, essentially meaning that one sketch is not always better than the other. 
+The right choice depends on your data, requirements for performance, and allowed 
+error. This library contains a benchmark program to compare the two for 
+different combinations of parameters and a specific dataset.
 
+To further evaluate which sketch to use, the library also includes functionality 
+for buffering elements before updating the sketches. This provides a trade-off between 
+the naive approach of keeping a map from elements to counts and using a sketch. 
+This should give a gain in performance if you have enough memory to maintain a large 
+enough buffer and elements arrive in groups.
+
+Finally, a well-known technique for improving the precision of CountMin sketches 
+is also available. This significantly slows down the processing time of elements, 
+but may improve the precision in practice.
 
 # Running the benchmark
 You need [mill](https://github.com/lihaoyi/mill) to build the benchmark suite.
 
-First, we need to build an agent the JVM. This is used to gather memory usage of the sketches in the benchmark.
+First, we need to build an agent for the JVM. This is used to gather memory usage of the sketches in the benchmark.
 
 ```bash
 mill agent.compile
@@ -23,7 +38,21 @@ This will launch the benchmark for several combinations of depth and width of th
 
 The data file is expected to contain one element per line. In this example each line is interpreted as a string. You may change this to `long` if each element in the data file can be parsed to an 64 bit integer.
 
-## Output
+## Sketches
+The benchmark compares 6 data structures based on the Count and CountMin 
+sketches:
+
+- CountMinSketch
+- CountMinSketch with conservative updates
+- BufferedCountMinSketch
+- CountSketch
+- BufferedCountSketch
+- SparkCountMinSketchWrapper
+
+The SparkCountMinSketchWrapper is the implementation of the CountMin
+sketch available in the Spark repository included for reference.
+
+## Benchmark tests
 The benchmark has three tests:
 1. A throughput comparison
 2. A precision comparison
@@ -46,6 +75,9 @@ SparkCountMinSketchWrapper 22118.6 21575.8 21913.2 17647.6
 
 ### Precision
 The precision is measured as the root mean square error of the estimates compared to the true value.
+
+Remember that the error on estimates computed using the CountMin sketch is one-sided 
+(it always overestimates the count), and the error for the Count sketch is two-sided.
 
 Example output:
 ```bash
