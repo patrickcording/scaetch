@@ -4,12 +4,10 @@ import scaetch.sketch.hash.HashFunctionSimulator
 
 /**
   * An implementation of the CountSketch by Charikar, Chen, and Farach-Colton
-  * (`https://www.cs.rutgers.edu/~farach/pubs/FrequentStream.pdf`).
+  * (https://www.cs.rutgers.edu/~farach/pubs/FrequentStream.pdf).
   *
-  * This implementation uses the MurmurHash3 algorithm for hashing.
-  *
-  * @param depth the number of hash tables. Good values are O(log N).
-  * @param width the number of counters in each hash table. Has to be a power of two.
+  * @param depth The number of hash tables.
+  * @param width The number of counters in each hash table. Has to be a power of two.
   */
 class CountSketch(val depth: Int, val width: Int) extends Sketch[CountSketch] {
   require(

@@ -1,7 +1,7 @@
 package scaetch.ds
 
 /**
-  * An implementation of a hash map that is using linear probing and where the underlying table is of a fixed
+  * An implementation of a hash map that is using linear probing. The underlying table is of a fixed
   * size.
   *
   * This data structure is intended for being used for when you know the total number of possible keys and

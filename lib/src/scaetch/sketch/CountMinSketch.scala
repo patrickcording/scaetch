@@ -3,7 +3,13 @@ package scaetch.sketch
 import scaetch.sketch.CountMinSketch.ConservativeUpdates
 import scaetch.sketch.hash.HashFunctionSimulator
 
-
+/**
+  * An implementation of the CountMin sketch by Cormode and Muthukrishnan
+  * (https://7797b024-a-62cb3a1a-s-sites.googlegroups.com/site/countminsketch/cm-latin.pdf).
+  *
+  * @param depth The number of hash tables.
+  * @param width The number of counters in each hash table. Has to be a power of two.
+  */
 class CountMinSketch(val depth: Int, val width: Int) extends Sketch[CountMinSketch] {
   require(
     (Math.log(width)/Math.log(2)).isWhole,
@@ -64,6 +70,13 @@ class CountMinSketch(val depth: Int, val width: Int) extends Sketch[CountMinSket
 object CountMinSketch {
   def apply(depth: Int, width: Int) = new CountMinSketch(depth, width)
 
+  /**
+    * Conservative updating of the CountMin sketch gives better bounds on the
+    * individual counters and therefore also the estimates. This comes at the
+    * cost of slower adding.
+    *
+    * See section 3.3.2 in http://conferences.sigcomm.org/sigcomm/2002/papers/traffmeas.pdf.
+    */
   trait ConservativeUpdates extends CountMinSketch {
     override def add[T](elem: T, count: Long)(implicit hash: HashFunctionSimulator[T]): ConservativeUpdates = {
       val updateValue = count + super.estimate(elem)
