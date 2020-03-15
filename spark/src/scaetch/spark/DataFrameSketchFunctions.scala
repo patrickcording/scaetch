@@ -75,6 +75,18 @@ class DataFrameSketchFunctions(df: DataFrame) {
   }
 }
 
+/**
+  * Import this to extend a Spark [[DataFrame]] with functions for using the sketches in
+  * Spark.
+  *
+  * Example:
+  * {{{
+  *   import scaetch.spark.DataFrameSketchFunctions._
+  *   // Read data into DataFrame `df`
+  *   val cms = df.sketch.countMinSketch(col("colName"), 5, 1024, 42, false)
+  *   cms.estimate("foo")
+  * }}}
+  */
 object DataFrameSketchFunctions {
   implicit class DataFrameExtender(val df: DataFrame) {
     def sketch = new DataFrameSketchFunctions(df)
