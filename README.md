@@ -5,18 +5,18 @@ and [CountMin](https://7797b024-a-62cb3a1a-s-sites.googlegroups.com/site/countmi
 The errors on estimates computed using these data structures are bounded in different 
 ways, essentially meaning that one sketch is not always better than the other. 
 The right choice depends on your data, requirements for performance, and allowed 
-error. This library contains a benchmark program to compare the two for 
+error. This library contains a benchmark program to compare the two sketches for 
 different combinations of parameters and a specific dataset.
 
 To further evaluate which sketch to use, the library also includes functionality 
 for buffering elements before updating the sketches. This provides a trade-off between 
 the naive approach of keeping a map from elements to counts and using a sketch. 
-This should give a gain in performance if you have enough memory to maintain a large 
-enough buffer and elements arrive in groups.
+If you have enough memory to maintain a large enough buffer and elements arrive in 
+groups, this may give an increase in performance.
 
-Finally, a well-known technique for improving the precision of CountMin sketches 
-is also available. This significantly slows down the processing time of elements, 
-but may improve the precision in practice.
+Finally, a well-known technique of conservative updating for improving the precision of 
+CountMin sketches is also available. This significantly slows down the processing time 
+of elements, but may improve the precision in practice.
 
 # Running the benchmark
 You need [mill](https://github.com/lihaoyi/mill) to build the benchmark suite.
