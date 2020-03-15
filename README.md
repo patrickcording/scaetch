@@ -76,8 +76,8 @@ SparkCountMinSketchWrapper 22118.6 21575.8 21913.2 17647.6
 ### Precision
 The precision is measured as the root mean square error of the estimates compared to the true value.
 
-Remember that the error on estimates computed using the CountMin sketch is one-sided 
-(it always overestimates the count), and the error for the Count sketch is two-sided.
+Remember that CountMin sketch has a one-sided error (it always overestimates the count),
+ and the error for the Count sketch is two-sided. This may be relevant to your scenario.
 
 Example output:
 ```bash
@@ -107,7 +107,7 @@ SparkCountMinSketchWrapper  3280.0  6352.0 12496.0 24784.0
 ```
 
 # Using the sketches
-## Quick
+### Quick
 ```scala
 import scaetch.sketch._
 import scaetch.sketch.hash._
@@ -124,7 +124,7 @@ cs.add(1.234)
 cs.estimate("foo")
 ```
 
-## Seeded sketch
+### Seeded sketch
 ```scala
 import scaetch.sketch._
 import scaetch.sketch.hash.StringHashFunctionSimulator
@@ -140,7 +140,7 @@ cs.add("foo")
 cs.add(123L)
 ```
 
-## Spark
+### Spark
 ```scala
 import scaetch.spark.DataFrameSketchFunctions._
 
@@ -149,7 +149,7 @@ val cms = df.sketch.countMinSketch(col("colName"), 5, 1024, 42, false)
 cms.estimate("foo")
 ```
 
-## Buffering
+### Buffering
 ```scala
 import scaetch.sketch._
 import scaetch.sketch.hash._
@@ -159,20 +159,14 @@ val bufferSize = 1000
 val bufferedSketch = new BufferedSketch(cs, bufferSize)
 ```
 
-## CountMin with conservative updates
+### CountMin with conservative updates
 ```scala
 val cms = CountMinSketch(5, 512).withConservativeUpdates
 ```
 
-# References
-[1] Count
 
-[2] CountMin
-
-[3] Less more
-
-[4] Conservative updates
-
-# Todo
+# Further work
 [ ] Implement heavy hitter algorithm
+
+[ ] Release artifact
 
