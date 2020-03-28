@@ -1,6 +1,6 @@
 # scaetch
 **Scætch** is a Scala implementation of the [Count](https://www.cs.rutgers.edu/~farach/pubs/FrequentStream.pdf) 
-and [CountMin](https://7797b024-a-62cb3a1a-s-sites.googlegroups.com/site/countminsketch/cm-latin.pdf) sketches for approximate counting in streams.Its API is strongly typed and the algorithms are implemented with performance in mind.
+and [CountMin](https://7797b024-a-62cb3a1a-s-sites.googlegroups.com/site/countminsketch/cm-latin.pdf) sketches for approximate counting in streams. Its API is strongly typed and the algorithms are implemented with performance in mind.
 
 This repository also contains a benchmark that lets you measure throughput and precision of the sketches on a sample of your data. There is no one sketch that is always the best. The benchmark will help you finding the one you need.
 
