@@ -2,6 +2,7 @@ import coursier.maven.MavenRepository
 import mill._
 import mill.modules.Assembly
 import mill.scalalib._
+import mill.scalalib.publish._
 
 
 trait SketchLibModule extends ScalaModule {
@@ -12,26 +13,31 @@ object agent extends ScalaModule {
   def scalaVersion = "2.12.10"
 }
 
-object lib extends SketchLibModule {
+object lib extends SketchLibModule with PublishModule {
   override def ivyDeps = Agg(
     ivy"net.openhft:zero-allocation-hashing:0.10.1"
   )
-}
 
-object spark extends SketchLibModule {
-  override def moduleDeps = Seq(lib)
-
-  override def ivyDeps = Agg(
-    ivy"org.apache.spark::spark-sql:2.4.1"
+  override def compileIvyDeps = Agg(
+    ivy"org.apache.spark::spark-sql:2.4.4"
   )
 
-  override def assemblyRules = Assembly.defaultRules ++
-    Seq("scala/.*", "org\\.apache\\.spark/.*")
-      .map(Assembly.Rule.ExcludePattern.apply)
+  def publishVersion = "0.0.1"
+
+  def pomSettings = PomSettings(
+    description = "Sketches for approximate counting in streams",
+    organization = "com.github.patrickcording",
+    url = "https://github.com/patrickcording/scaetch",
+    licenses = Seq(License.MIT),
+    versionControl = VersionControl.github("patrickcording", "scaetch"),
+    developers = Seq(
+      Developer("patrickcording", "Patrick Cording", "https://github.com/patrickcording")
+    )
+  )
 }
 
 object bench extends SketchLibModule {
-  override def moduleDeps = Seq(lib, spark, agent)
+  override def moduleDeps = Seq(lib, agent)
   override def mainClass = Some("scaetch.bench.Benchmark")
 
   override def repositories = super.repositories ++ Seq(
