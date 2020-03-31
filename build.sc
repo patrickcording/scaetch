@@ -22,6 +22,7 @@ object lib extends SketchLibModule with PublishModule {
     ivy"org.apache.spark::spark-sql:2.4.4"
   )
 
+  override def artifactName = "scaetch"
   def publishVersion = "0.0.1"
 
   def pomSettings = PomSettings(
