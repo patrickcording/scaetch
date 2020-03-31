@@ -4,6 +4,9 @@ and [CountMin](https://7797b024-a-62cb3a1a-s-sites.googlegroups.com/site/countmi
 
 This repository also contains a benchmark that lets you measure throughput and precision of the sketches on a sample of your data. There is no one sketch that is always the best. The benchmark will help you finding the one you need.
 
+## WIP
+Scætch is currently **work in progress**. Some breaking bugs exist! Once things are fixed, a release will be published to Maven Central.
+
 ## Using the sketches
 ### Getting started
 ```scala
