@@ -6,7 +6,7 @@ import scaetch.sketch.hash.HashFunctionSimulator
   * A wrapper for the CountMin sketch implementation in Spark.
   */
 class SparkCountMinSketchWrapper(val depth: Int, val width: Int, val seed: Int)
-  extends Sketch[SparkCountMinSketchWrapper] {
+  extends Sketch with SketchLike[SparkCountMinSketchWrapper] {
   val underlying = org.apache.spark.util.sketch.CountMinSketch.create(depth, width, seed)
 
   override def add[T](elem: T, count: Long)(implicit hash: HashFunctionSimulator[T]): SparkCountMinSketchWrapper = {

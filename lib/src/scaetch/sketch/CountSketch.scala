@@ -9,7 +9,8 @@ import scaetch.sketch.hash.HashFunctionSimulator
   * @param depth The number of hash tables.
   * @param width The number of counters in each hash table. Has to be a power of two.
   */
-class CountSketch(val depth: Int, val width: Int) extends Sketch[CountSketch] {
+class CountSketch(val depth: Int, val width: Int)
+  extends Sketch with SketchLike[CountSketch] {
   require(
     (Math.log(width)/Math.log(2)).isWhole,
     s"Width must be a power of 2, $width is not a power of 2"

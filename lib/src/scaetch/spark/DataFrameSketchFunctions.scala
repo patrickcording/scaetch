@@ -4,7 +4,7 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.types.LongType
 import org.apache.spark.sql.{Column, DataFrame}
 import scaetch.sketch.hash.{LongHashFunctionSimulator, StringHashFunctionSimulator}
-import scaetch.sketch.{BufferedSketch, CountMinSketch, CountSketch, Sketch}
+import scaetch.sketch.{BufferedSketch, CountMinSketch, CountSketch, Sketch, SketchLike}
 
 import scala.reflect.ClassTag
 
@@ -53,8 +53,8 @@ class DataFrameSketchFunctions(df: DataFrame) {
     doSketching(df, column, sketch, seed)
   }
 
-  private def doSketching[A <: Sketch[A]](df: DataFrame, column: Column, sketch: A, seed: Int)
-                                         (implicit tag: ClassTag[A]): A = {
+  private def doSketching[A <: Sketch with SketchLike[A]](df: DataFrame, column: Column, sketch: A, seed: Int)
+                                             (implicit tag: ClassTag[A]): A = {
     val singleColumnDf = df.select(column)
     val dataType = singleColumnDf.schema.fields.head.dataType
 

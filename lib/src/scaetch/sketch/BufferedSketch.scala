@@ -4,7 +4,7 @@ import scaetch.ds.FixedSizeHashMap
 import scaetch.sketch.hash.HashFunctionSimulator
 
 /**
-  * A decorator for putting an insertion buffer in front of instances of [[Sketch]].
+  * A decorator for putting an insertion buffer in front of instances of [[SketchLike]].
   *
   * When inserting an element into a sketch a number of hash functions need to be
   * evaluated. Depending on the hash function, this can be costly. The sketches
@@ -16,16 +16,16 @@ import scaetch.sketch.hash.HashFunctionSimulator
   * hash map has reached its capacity the elements and counts are inserted into
   * the decorated sketch.
   *
-  * @param sketch     The [[Sketch]] to add a buffer to.
+  * @param sketch     The [[SketchLike]] to add a buffer to.
   * @param bufferSize The size of the buffer.
-  * @tparam A         The type of the concrete implementation of this [[Sketch]].
+  * @tparam A The type of the concrete implementation of this [[SketchLike]].
   */
-class BufferedSketch[A <: Sketch[A]](val sketch: A, val bufferSize: Int)
-  extends Sketch[BufferedSketch[A]] with Serializable {
+class BufferedSketch[A <: Sketch with SketchLike[A]](val sketch: A, val bufferSize: Int)
+  extends Sketch with SketchLike[BufferedSketch[A]] with Serializable {
 
   private val buffer = new FixedSizeHashMap[(Long => A, Long)](bufferSize)
 
-  def flush() = {
+  def flush(): Unit = {
     buffer.getTable.foreach {
       case Some((_, (f, c))) => f(c)
       case None =>
@@ -38,7 +38,7 @@ class BufferedSketch[A <: Sketch[A]](val sketch: A, val bufferSize: Int)
     // we actually insert into the sketch in the `flush` function. We cannot pass it
     // without erasing its type, so we use it here to create a new function for
     // inserting into the sketch.
-    val sketchUpdateFunction = (c: Long) => sketch.add(elem, c)
+    val sketchUpdateFunction = (c: Long) => sketch.add(elem, c).asInstanceOf[A]
 
     val hashMapUpdateFunction = (e: Option[(Long => A, Long)]) => e match {
       case Some((_, currentCount)) => (sketchUpdateFunction, count + currentCount)

@@ -3,11 +3,13 @@ package scaetch.sketch
 import scaetch.sketch.hash.HashFunctionSimulator
 
 /**
-  * Base class for sketch implementations.
-  *
-  * @tparam A The type of the concrete implementation of this [[Sketch]].
+  * Base trait for sketch implementations. Sketches must extend this and make sure that
+  * the return type for the `add` function is overridden by the type of the extending
+  * class. Moreover, a [[SketchLike]] must be mixed in when extending to provide the type
+  * of the extending class to `merge`. This will also provide a shorthand function for
+  * `add(elem, 1)`.
   */
-abstract class Sketch[A] extends Serializable {
+trait Sketch {
   /**
     * Adds `count` to the count of `elem`. Extending classes must implement this function.
     *
@@ -15,16 +17,16 @@ abstract class Sketch[A] extends Serializable {
     * @param count  The count to add.
     * @param hash   The hash function simulator to use.
     * @tparam T     The type of the element to add.
-    * @return       This [[Sketch]] as an instance of `A`.
+    * @return This [[SketchLike]] as an instance of `A`.
     */
-  def add[T](elem: T, count: Long)(implicit hash: HashFunctionSimulator[T]): A
+  def add[T](elem: T, count: Long)(implicit hash: HashFunctionSimulator[T]): Sketch
 
   /**
     * Adds 1 to the count of `elem`.
     *
     * @see `add(elem: T, count: Long)`
     */
-  def add[T](elem: T)(implicit hash: HashFunctionSimulator[T]): A = add(elem, 1L)
+  def add[T](elem: T)(implicit hash: HashFunctionSimulator[T]): Sketch
 
   /**
     * Estimates the count of `elem`. Extending classes must implement this function.
@@ -35,6 +37,24 @@ abstract class Sketch[A] extends Serializable {
     * @return     An approximate count for `elem`.
     */
   def estimate[T](elem: T)(implicit hash: HashFunctionSimulator[T]): Long
+}
+
+/**
+  * @see [[Sketch]]
+  * @tparam A Type of sketch implementing this trait.
+  */
+trait SketchLike[A <: Sketch] extends Serializable {
+  // A SketchLike implementation must be provided when extending Sketch
+  this: Sketch =>
+
+  /**
+    * Adds 1 to the count of `elem`.
+    *
+    * @see `add(elem: T, count: Long)`
+    */
+  override def add[T](elem: T)(implicit hash: HashFunctionSimulator[T]): A = {
+    this.add(elem, 1L).asInstanceOf[A]
+  }
 
   /**
     * Merges this sketch with `other`. Extending classes must implement this function.
