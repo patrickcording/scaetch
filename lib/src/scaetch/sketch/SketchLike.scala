@@ -13,7 +13,7 @@ trait SketchLike[A <: Sketch] extends Serializable {
   /**
     * Adds 1 to the count of `elem`.
     *
-    * @see `add(elem: T, count: Long)`
+    * @see [[Sketch.add(elem: T)]]
     */
   override def add[T](elem: T)(implicit hash: HashFunctionSimulator[T]): A = {
     this.add(elem, 1L).asInstanceOf[A]

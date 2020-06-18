@@ -24,7 +24,7 @@ trait Sketch {
   /**
     * Adds 1 to the count of `elem`.
     *
-    * @see `add(elem: T, count: Long)`
+    * @see [[Sketch.add[T](elem: T, count: Long)]]
     */
   def add[T](elem: T)(implicit hash: HashFunctionSimulator[T]): Sketch
 
