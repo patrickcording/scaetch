@@ -1,8 +1,10 @@
 package scaetch.bench
 
+import net.openhft.hashing.LongHashFunction
+import org.apache.commons.math3.distribution.ZipfDistribution
 import org.scalameter._
-import scaetch.sketch.{BufferedSketch, CountMinSketch, CountSketch, SparkCountMinSketchWrapper}
-import scaetch.util.{Args, DeepSize, FileUtil, Printer}
+import scaetch.sketch.{BufferedSketch, CountMinSketch, CountSketch, HeavyHitter, SparkCountMinSketchWrapper}
+import scaetch.util.{Args, DeepSize, FileUtil, Misc, Printer}
 import scaetch.sketch.hash.implicits._
 
 import scala.collection.mutable
@@ -12,12 +14,12 @@ object Benchmark extends App {
 
   private def prepareSketches(depth: Int, width: Int, bufferSize: Int) = {
     List(
-      (() => CountSketch(depth, width), "CountSketch"),
+//      (() => CountSketch(depth, width), "CountSketch"),
       (() => CountMinSketch(depth, width), "CountMinSketch"),
-      (() => CountMinSketch(depth, width).withConservativeUpdates, "CountMinSketch with CU"),
+//      (() => CountMinSketch(depth, width).withConservativeUpdates, "CountMinSketch with CU"),
       (() => SparkCountMinSketchWrapper(depth, width, 42), "SparkCountMinSketchWrapper"),
-      (() => new BufferedSketch(CountSketch(depth, width), bufferSize), "BufferedCountSketch"),
-      (() => new BufferedSketch(CountMinSketch(depth, width), bufferSize), "BufferedCountMinSketch")
+//      (() => new BufferedSketch(CountSketch(depth, width), bufferSize), "BufferedCountSketch"),
+//      (() => new BufferedSketch(CountMinSketch(depth, width), bufferSize), "BufferedCountMinSketch")
     )
   }
 
@@ -126,7 +128,12 @@ object Benchmark extends App {
   }
 
   val benchmarkArgs = Args.validate(args)
-  val data = FileUtil.readAs(benchmarkArgs.file, benchmarkArgs.dataType).toList
+
+  val data = if (benchmarkArgs.dataType == "long") {
+    FileUtil.readAs[Long](benchmarkArgs.file).toList
+  } else {
+    FileUtil.readAs[String](benchmarkArgs.file).toList
+  }
 
   runThroughputBenchmark(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
   runPrecisionBenchmark(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
