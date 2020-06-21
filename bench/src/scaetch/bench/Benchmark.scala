@@ -127,6 +127,40 @@ object Benchmark extends App {
     }
   }
 
+  def runHeavyHitterComparison(data: List[Any],
+                               depths: List[Int],
+                               widths: List[Int],
+                               bufferSize: Int) = {
+
+    println("-------------------------------------------------")
+    println("Running heavy hitter comparison (top k precision)")
+    println("-------------------------------------------------")
+
+    // Compute actual counts
+    val actualCounts = data.groupBy(elem => elem).mapValues(_.length)
+
+    for (depth <- depths) {
+      val results = mutable.Map.empty[(String, String), Double]
+      for (width <- widths) {
+        val sketches = prepareSketches(depth, width, bufferSize)
+        for (sketch <- sketches) {
+          val sk = sketch._1()
+          for (elem <- data) {
+            sk.add(elem, 1L)
+          }
+          // Estimate an arbitrary value to flush buffers
+          sk.estimate(0L)
+          val estimates = actualCounts.map { case (k, _) => (k, sk.estimate(k).toInt) }
+          val largestTopK = Misc.largestCommonTopK(actualCounts, estimates)
+          results.update((sketch._2, width.toString), largestTopK)
+        }
+      }
+      println(s"Depth = $depth")
+      Printer.printTable(results.toMap)
+      println("\n")
+    }
+  }
+
   val benchmarkArgs = Args.validate(args)
 
   val data = if (benchmarkArgs.dataType == "long") {
@@ -138,4 +172,5 @@ object Benchmark extends App {
   runThroughputBenchmark(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
   runPrecisionBenchmark(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
   runMemoryBenchmark(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
+  runHeavyHitterComparison(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
 }
