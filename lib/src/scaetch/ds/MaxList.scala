@@ -12,7 +12,7 @@ import scala.collection.mutable
   * @tparam T The type of the elements to store.
   */
 class MaxList[T](k: Int) {
-  private val elements = mutable.Map.empty[T, Int]
+  private val elements = mutable.Map.empty[T, Long]
 
   /**
     * Adds an element with weight `weight` to this [[MaxList]].
@@ -22,7 +22,7 @@ class MaxList[T](k: Int) {
     * @param elem   The element to add.
     * @return       This [[MaxList]].
     */
-  def add(weight: Int, elem: T): MaxList[T] = {
+  def add(weight: Long, elem: T): MaxList[T] = {
     elements.update(elem, weight)
     if (elements.size > 2 * k) {
       val min = elements.values.toArray.sorted.apply(elements.size / 2)
@@ -34,5 +34,5 @@ class MaxList[T](k: Int) {
   /**
     * @return The `k` heaviest elements.
     */
-  def get: Seq[T] = elements.toSeq.sortBy(-_._2).map(_._1).take(k)
+  def get: List[T] = elements.toList.sortBy(-_._2).map(_._1).take(k)
 }
