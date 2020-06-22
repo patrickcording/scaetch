@@ -48,6 +48,7 @@ object bench extends SketchLibModule {
   override def forkArgs = Seq("-javaagent:./Agent.jar")
 
   override def ivyDeps = Agg(
-    ivy"com.storm-enroute::scalameter-core:0.19-SNAPSHOT"
+    ivy"com.storm-enroute::scalameter-core:0.19-SNAPSHOT",
+    ivy"org.apache.commons:commons-math3:3.6.1"
   )
 }

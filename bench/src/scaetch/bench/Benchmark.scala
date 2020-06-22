@@ -1,11 +1,9 @@
 package scaetch.bench
 
-import net.openhft.hashing.LongHashFunction
-import org.apache.commons.math3.distribution.ZipfDistribution
 import org.scalameter._
-import scaetch.sketch.{BufferedSketch, CountMinSketch, CountSketch, HeavyHitter, SparkCountMinSketchWrapper}
-import scaetch.util.{Args, DeepSize, FileUtil, Misc, Printer}
 import scaetch.sketch.hash.implicits._
+import scaetch.sketch.{BufferedSketch, CountMinSketch, CountSketch, SparkCountMinSketchWrapper}
+import scaetch.util._
 
 import scala.collection.mutable
 
@@ -14,9 +12,9 @@ object Benchmark extends App {
 
   private def prepareSketches(depth: Int, width: Int, bufferSize: Int) = {
     List(
-//      (() => CountSketch(depth, width), "CountSketch"),
+      (() => CountSketch(depth, width), "CountSketch"),
       (() => CountMinSketch(depth, width), "CountMinSketch"),
-//      (() => CountMinSketch(depth, width).withConservativeUpdates, "CountMinSketch with CU"),
+      (() => CountMinSketch(depth, width).withConservativeUpdates, "CountMinSketch with CU"),
       (() => SparkCountMinSketchWrapper(depth, width, 42), "SparkCountMinSketchWrapper"),
 //      (() => new BufferedSketch(CountSketch(depth, width), bufferSize), "BufferedCountSketch"),
 //      (() => new BufferedSketch(CountMinSketch(depth, width), bufferSize), "BufferedCountMinSketch")
@@ -130,11 +128,12 @@ object Benchmark extends App {
   def runHeavyHitterComparison(data: List[Any],
                                depths: List[Int],
                                widths: List[Int],
-                               bufferSize: Int) = {
+                               bufferSize: Int,
+                               k: Int) = {
 
-    println("-------------------------------------------------")
-    println("Running heavy hitter comparison (top k precision)")
-    println("-------------------------------------------------")
+    println("---------------------------------------------------")
+    println(s"Running heavy hitter comparison (top $k precision)")
+    println("---------------------------------------------------")
 
     // Compute actual counts
     val actualCounts = data.groupBy(elem => elem).mapValues(_.length)
@@ -151,7 +150,7 @@ object Benchmark extends App {
           // Estimate an arbitrary value to flush buffers
           sk.estimate(0L)
           val estimates = actualCounts.map { case (k, _) => (k, sk.estimate(k).toInt) }
-          val largestTopK = Misc.largestCommonTopK(actualCounts, estimates)
+          val largestTopK = Misc.getTopKIntersection(actualCounts, estimates, k)
           results.update((sketch._2, width.toString), largestTopK)
         }
       }
@@ -163,14 +162,25 @@ object Benchmark extends App {
 
   val benchmarkArgs = Args.validate(args)
 
-  val data = if (benchmarkArgs.dataType == "long") {
-    FileUtil.readAs[Long](benchmarkArgs.file).toList
+  val data = if (benchmarkArgs.file == "generate") {
+    val data = Data.generateZipfianLongs(1000000, 1.25, 42)
+    if (benchmarkArgs.dataType == "string") {
+      data.map(_.toString)
+    } else {
+      data
+    }
   } else {
-    FileUtil.readAs[String](benchmarkArgs.file).toList
+    if (benchmarkArgs.dataType == "long") {
+      FileUtil.readAs[Long](benchmarkArgs.file).toList
+    } else {
+      FileUtil.readAs[String](benchmarkArgs.file).toList
+    }
   }
 
   runThroughputBenchmark(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
   runPrecisionBenchmark(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
   runMemoryBenchmark(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
-  runHeavyHitterComparison(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
+  runHeavyHitterComparison(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize, 10)
+  runHeavyHitterComparison(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize, 100)
+  runHeavyHitterComparison(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize, 1000)
 }
