@@ -1,3 +1,4 @@
+import lib.ivy
 import mill._
 import mill.scalalib._
 import mill.scalalib.publish._
@@ -5,6 +6,7 @@ import mill.scalalib.publish._
 
 trait SketchLibModule extends ScalaModule {
   def scalaVersion = "2.12.10"
+  val sparkVersion = "2.4.6"
 }
 
 object agent extends ScalaModule {
@@ -17,7 +19,7 @@ object lib extends SketchLibModule with PublishModule {
   )
 
   override def compileIvyDeps = Agg(
-    ivy"org.apache.spark::spark-sql:2.4.4"
+    ivy"org.apache.spark::spark-sql:$sparkVersion"
   )
 
   override def artifactName = "scaetch"
@@ -36,13 +38,14 @@ object lib extends SketchLibModule with PublishModule {
 }
 
 object bench extends SketchLibModule {
-  override def moduleDeps = Seq(lib, agent)
+  override def moduleDeps = Seq(lib)
   override def mainClass = Some("scaetch.bench.Benchmark")
 
   override def forkArgs = Seq("-javaagent:./Agent.jar")
 
   override def ivyDeps = Agg(
     ivy"com.storm-enroute::scalameter-core:0.19",
-    ivy"org.apache.commons:commons-math3:3.6.1"
+    ivy"org.apache.commons:commons-math3:3.6.1",
+    ivy"org.apache.spark::spark-sql:$sparkVersion"
   )
 }
