@@ -27,8 +27,8 @@ import net.openhft.hashing.LongHashFunction
   * @tparam T The type of the elements to hash by this hash function simulator.
   */
 trait HashFunctionSimulator[T] {
-  protected var a = 0
-  protected var b = 0
+  protected var a: Long = 0
+  protected var b: Long = 0
 
   /**
     * Sets the value that we want to simulate hashing of.
@@ -43,50 +43,44 @@ trait HashFunctionSimulator[T] {
     * @param i  The hash function to simulate.
     * @return   The hash value of the `i`-th simulated hash function.
     */
-  def hash(i: Int): Int = {
-    a*i + b
-  }
+  def hash(i: Int): Int = ((a*(i.toLong+1) + b) >>> 32).toInt
 
   /**
-    * @return The state of the simulator. The state is a tupled of integers.
+    * @return The state of the simulator. The state is a tupled of longs.
     */
-  def getState: (Int, Int) = (a, b)
+  def getState: (Long, Long) = (a, b)
 }
 
 /**
   * A hash function simulator for `Long` values.
   *
-  * Uses xxHash of `Long` from [[net.openhft.hashing]] as base hash function.
-  *
   * @param seed The seed.
   */
 class LongHashFunctionSimulator(seed: Long) extends HashFunctionSimulator[Long] {
   private val h = LongHashFunction.xx(seed)
-  private val A1 = h.hashLong(1)
-  private val A2 = h.hashLong(2)
-  private val B1 = h.hashLong(3)
-  private val B2 = h.hashLong(4)
+  private val A1 = h.hashLong(1) | 1L
+  private val A2 = h.hashLong(2) | 1L
 
   override def set(x: Long): Unit = {
-    a = (A1*x + B1).toInt
-    b = (A2*x + B2).toInt
+    a = A1*x
+    b = A2*x
   }
 }
 
 /**
   * A hash function simulator for `String` values.
   *
-  * Uses xxHash of `String` from [[net.openhft.hashing]] as base hash function.
-  *
   * @param seed The seed.
   */
 class StringHashFunctionSimulator(seed: Long) extends HashFunctionSimulator[String] {
   private val h = LongHashFunction.xx(seed)
+  private val A1 = h.hashLong(1) | 1L
+  private val A2 = h.hashLong(2) | 1L
 
   override def set(x: String): Unit = {
     val v = h.hashChars(x)
-    a = (v >>> 32).toInt
-    b = (v & 0xFFFFFFFFL).toInt
+    a = A1*v
+    b = A2*v
   }
 }
 
@@ -104,7 +98,7 @@ class AnyHashFunctionSimulator(seed: Long) extends HashFunctionSimulator[Any] {
   private val stringHashFunctionSimulator = new StringHashFunctionSimulator(seed)
   private val longHashFunctionSimulator = new LongHashFunctionSimulator(seed)
 
-  private def setState(state: (Int, Int)) = {
+  private def setState(state: (Long, Long)) = {
     a = state._1
     b = state._2
   }
