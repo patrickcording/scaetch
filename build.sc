@@ -1,6 +1,4 @@
-import coursier.maven.MavenRepository
 import mill._
-import mill.modules.Assembly
 import mill.scalalib._
 import mill.scalalib.publish._
 
@@ -41,14 +39,10 @@ object bench extends SketchLibModule {
   override def moduleDeps = Seq(lib, agent)
   override def mainClass = Some("scaetch.bench.Benchmark")
 
-  override def repositories = super.repositories ++ Seq(
-    MavenRepository("https://oss.sonatype.org/content/repositories/snapshots")
-  )
-
   override def forkArgs = Seq("-javaagent:./Agent.jar")
 
   override def ivyDeps = Agg(
-    ivy"com.storm-enroute::scalameter-core:0.19-SNAPSHOT",
+    ivy"com.storm-enroute::scalameter-core:0.19",
     ivy"org.apache.commons:commons-math3:3.6.1"
   )
 }
