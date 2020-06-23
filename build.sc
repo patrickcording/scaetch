@@ -38,7 +38,7 @@ object lib extends SketchLibModule with PublishModule {
 }
 
 object bench extends SketchLibModule {
-  override def moduleDeps = Seq(lib)
+  override def moduleDeps = Seq(lib, agent)
   override def mainClass = Some("scaetch.bench.Benchmark")
 
   override def forkArgs = Seq("-javaagent:./Agent.jar")
