@@ -43,7 +43,7 @@ trait HashFunctionSimulator[T] {
     * @param i  The hash function to simulate.
     * @return   The hash value of the `i`-th simulated hash function.
     */
-  def hash(i: Int): Int = ((a*(i.toLong+1) + b) >>> 32).toInt
+  def hash(i: Int): Int = (a*(i.toLong+1) + b).toInt
 
   /**
     * @return The state of the simulator. The state is a tupled of longs.
@@ -62,8 +62,8 @@ class LongHashFunctionSimulator(seed: Long) extends HashFunctionSimulator[Long] 
   private val A2 = h.hashLong(2) | 1L
 
   override def set(x: Long): Unit = {
-    a = A1*x
-    b = A2*x
+    a = A1*x >>> 32
+    b = A2*x >>> 32
   }
 }
 
@@ -74,13 +74,11 @@ class LongHashFunctionSimulator(seed: Long) extends HashFunctionSimulator[Long] 
   */
 class StringHashFunctionSimulator(seed: Long) extends HashFunctionSimulator[String] {
   private val h = LongHashFunction.xx(seed)
-  private val A1 = h.hashLong(1) | 1L
-  private val A2 = h.hashLong(2) | 1L
 
   override def set(x: String): Unit = {
     val v = h.hashChars(x)
-    a = A1*v
-    b = A2*v
+    a = v >>> 32
+    b = v & 0xFFFFFFFFL
   }
 }
 
