@@ -125,14 +125,14 @@ object Benchmark extends App {
     }
   }
 
-  def runHeavyHitterComparison(data: List[Any],
-                               depths: List[Int],
-                               widths: List[Int],
-                               bufferSize: Int,
-                               k: Int) = {
+  def runTopKComparison(data: List[Any],
+                        depths: List[Int],
+                        widths: List[Int],
+                        bufferSize: Int,
+                        k: Int) = {
 
     println("---------------------------------------------------")
-    println(s"Running heavy hitter comparison (top $k precision)")
+    println(s"Running top K comparison (top $k recall/precision)")
     println("---------------------------------------------------")
 
     // Compute actual counts
@@ -150,12 +150,64 @@ object Benchmark extends App {
           // Estimate an arbitrary value to flush buffers
           sk.estimate(0L)
           val estimates = actualCounts.map { case (k, _) => (k, sk.estimate(k).toInt) }
-          val largestTopK = Misc.getTopKIntersection(actualCounts, estimates, k)
-          results.update((sketch._2, width.toString), largestTopK)
+          val recall = 100 * Misc.getTopKIntersection(actualCounts, estimates, k).toDouble / k.toDouble
+          results.update((sketch._2, width.toString), recall)
         }
       }
       println(s"Depth = $depth")
       Printer.printTable(results.toMap)
+      println("\n")
+    }
+  }
+
+  def runHeavyHitterComparison(data: List[Any],
+                               depths: List[Int],
+                               widths: List[Int],
+                               bufferSize: Int,
+                               phi: Double) = {
+
+    println("--------------------------------------------")
+    println(s"Running heavy hitter comparison (phi = $phi)")
+    println("--------------------------------------------")
+
+    // Compute actual counts
+    val n = data.length
+    val actualCounts = data.groupBy(elem => elem).mapValues(_.length)
+    val actualFrequencies = actualCounts.mapValues(_ / n.toDouble)
+    val actualHeavyHitters = actualFrequencies
+      .filter { case (_, f) => f > phi }
+      .keys
+      .toSet
+
+    for (depth <- depths) {
+      val recallResults = mutable.Map.empty[(String, String), Double]
+      val precisionResults = mutable.Map.empty[(String, String), Double]
+      for (width <- widths) {
+        val sketches = prepareSketches(depth, width, bufferSize)
+        for (sketch <- sketches) {
+          val sk = sketch._1()
+          for (elem <- data) {
+            sk.add(elem, 1L)
+          }
+          // Estimate an arbitrary value to flush buffers
+          sk.estimate(0L)
+          val estimatedHeavyHitters = actualCounts
+            .map { case (k, _) => (k, sk.estimate(k) / n.toDouble) }
+            .filter { case (_, f) => f > phi }
+            .keys
+            .toSet
+          val trueEstimatedHeavyHitters = 100.0d * actualHeavyHitters.intersect(estimatedHeavyHitters).size
+          val recall = trueEstimatedHeavyHitters / actualHeavyHitters.size
+          val precision = trueEstimatedHeavyHitters / estimatedHeavyHitters.size
+          recallResults.update((sketch._2, width.toString), recall)
+          precisionResults.update((sketch._2, width.toString), precision)
+        }
+      }
+      println(s"Depth = $depth")
+      println("\nRecall")
+      Printer.printTable(recallResults.toMap)
+      println("\nPrecision")
+      Printer.printTable(precisionResults.toMap)
       println("\n")
     }
   }
@@ -180,7 +232,12 @@ object Benchmark extends App {
   runThroughputBenchmark(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
   runPrecisionBenchmark(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
   runMemoryBenchmark(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
-  runHeavyHitterComparison(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize, 10)
-  runHeavyHitterComparison(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize, 100)
-  runHeavyHitterComparison(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize, 1000)
+  runTopKComparison(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize, 10)
+  runTopKComparison(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize, 100)
+  runTopKComparison(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize, 1000)
+  runHeavyHitterComparison(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize, 0.01)
+  runHeavyHitterComparison(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize, 0.05)
+  runHeavyHitterComparison(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize, 0.1)
+  runHeavyHitterComparison(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize, 0.2)
+  runHeavyHitterComparison(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize, 0.5)
 }
