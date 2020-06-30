@@ -1,6 +1,7 @@
 package scaetch.bench
 
 import org.scalameter._
+import scaetch.sketch.application.HeavyHitter
 import scaetch.sketch.hash.implicits._
 import scaetch.sketch.{BufferedSketch, CountMinSketch, CountSketch, SparkCountMinSketchWrapper}
 import scaetch.util._
@@ -16,8 +17,8 @@ object Benchmark extends App {
       (() => CountMinSketch(depth, width), "CountMinSketch"),
       (() => CountMinSketch(depth, width).withConservativeUpdates, "CountMinSketch with CU"),
       (() => SparkCountMinSketchWrapper(depth, width, 42), "SparkCountMinSketchWrapper"),
-//      (() => new BufferedSketch(CountSketch(depth, width), bufferSize), "BufferedCountSketch"),
-//      (() => new BufferedSketch(CountMinSketch(depth, width), bufferSize), "BufferedCountMinSketch")
+      (() => new BufferedSketch(CountSketch(depth, width), bufferSize), "BufferedCountSketch"),
+      (() => new BufferedSketch(CountMinSketch(depth, width), bufferSize), "BufferedCountMinSketch")
     )
   }
 
