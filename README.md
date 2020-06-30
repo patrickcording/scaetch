@@ -49,7 +49,7 @@ val cms = df.sketch.countMinSketch(col("colName"), 5, 1024, 42, false)
 cms.estimate("foo")
 ```
 
-## Applications of Count Sketches
+## Applications of count sketches
 Count sketches can be extended to do more than just approximate counting. They may also be used to efficiently 
 approximate the top K most frequent elements and find heavy hitters in the stream.
 
