@@ -1,6 +1,7 @@
-package scaetch.sketch
+package scaetch.sketch.application
 
 import scaetch.ds.MaxList
+import scaetch.sketch.Sketch
 import scaetch.sketch.hash.HashFunctionSimulator
 
 
