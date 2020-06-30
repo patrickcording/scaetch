@@ -49,6 +49,34 @@ val cms = df.sketch.countMinSketch(col("colName"), 5, 1024, 42, false)
 cms.estimate("foo")
 ```
 
+## Applications of Count Sketches
+Count sketches can be extended to do more than just approximate counting. They may also be used to efficiently 
+approximate the top K most frequent elements and find heavy hitters in the stream.
+
+Below are examples of how to use Scætch for this.
+
+### Top K
+```scala
+import scaetch.sketch.application.TopK
+
+val cms = CountMinSketch(5, 512)
+val k = 10
+val topK = new TopK[Long](10, cms)
+topK.add(123)
+topK.get // : List[Long]
+```
+
+### Heavy hitters
+```scala
+import scaetch.sketch.application.HeavyHitter
+
+val cmsFactory = () => CountMinSketch(5, 512)
+val phi = 0.05 // An element is "heavy" if it occurs more than 5% of the time
+val hh = new HeavyHitter(phi, cmsFactory)
+hh.add(123)
+hh.get // : List[Long]
+```
+
 ## Running the benchmark
 You need [mill](https://github.com/lihaoyi/mill) to build the benchmark 
 module.
