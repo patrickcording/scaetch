@@ -51,7 +51,7 @@ cms.estimate("foo")
 
 ## Applications of count sketches
 Count sketches can be extended to do more than just approximate counting. They may also be used to efficiently 
-approximate the top K most frequent elements and find heavy hitters in the stream.
+approximate the top k most frequent elements and find heavy hitters in the stream.
 
 Below are examples of how to use Scætch for this.
 
@@ -102,10 +102,12 @@ each line is interpreted as a string. You may change this to `long` if each
 element in the data file can be parsed to a 64 bit integer.
 
 ### Output
-The benchmark has three tests:
+The benchmark has five tests:
 1. A throughput comparison
-2. A precision comparison
-3. A memory usage comparison
+2. A memory usage comparison
+3. A precision comparison (RMSE)
+4. A top-k recall comparison (for various values of k)
+5. A heavy hitter recall and precision comparison (for various values of phi)
 
 For each test the benchmark will output several tables (depending on the supplied parameters). The following is an example of what the output of the throughput test might look like. The sketches in this test have depth 3 and widths from 128 to 1024.
 

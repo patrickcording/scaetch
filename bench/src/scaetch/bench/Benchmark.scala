@@ -228,10 +228,10 @@ object Benchmark extends App {
       FileUtil.readAs[String](benchmarkArgs.file).toList
     }
   }
-  
+
   runThroughputBenchmark(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
-  runPrecisionBenchmark(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
   runMemoryBenchmark(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
+  runPrecisionBenchmark(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize)
   runTopKComparison(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize, 10)
   runTopKComparison(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize, 100)
   runTopKComparison(data, benchmarkArgs.depths, benchmarkArgs.widths, benchmarkArgs.bufferSize, 1000)
