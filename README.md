@@ -121,3 +121,20 @@ Depth = 3
                CountSketch 14902.5 23446.1 27941.5 11788.5
 SparkCountMinSketchWrapper 22118.6 21575.8 21913.2 17647.6
 ```
+
+## References
+The algorithms and data structures implemented in Scætch are not my ideas. If you want to learn more, here is a list of 
+the research papers that it is based on. You can find PDFs of all papers on [Google Scholar](http://scholar.google.com).
+
+- "Finding frequent items in data streams." Moses Charikar, Kevin Chen, and Martin Farach-Colton. Theoretical Computer Science (2004).
+
+- "An improved data stream summary: the count-min sketch and its applications." Graham Cormode and Shan Muthukrishnan. Journal of Algorithms (2005).
+
+- "Methods for finding frequent items in data streams." Graham Cormode and Marios Hadjieleftheriou. The VLDB Journal (2010).
+
+- "What's hot and what's not: tracking most frequent items dynamically." Graham Cormode and Shan Muthukrishnan. ACM Transactions on Database Systems (2005).
+
+- "New directions in traffic measurement and accounting: Focusing on the elephants, ignoring the mice." Cristian Estan and George Varghese. ACM Transactions on Computer Systems (2003).
+
+- "Less hashing, same performance: Building a better Bloom filter." Adam Kirsch and Michael Mitzenmacher. Random Structures & Algorithms (2008).
+
