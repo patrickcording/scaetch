@@ -5,10 +5,32 @@ import scaetch.sketch.hash.HashFunctionSimulator
 
 import scala.collection.mutable
 
+/**
+ * A data structure for finding the heavy hitters (elements that occur more than a certain threshold times)
+ * in a stream. Works with any of the count sketches implemented in Scaetch.
+ *
+ * The algorithm is taken from "What’s Hot and What’s Not: Tracking Most Frequent Items Dynamically" by
+ * G. Cormode and S. Muthukrishnan (https://www.cs.princeton.edu/courses/archive/spring04/cos598B/bib/CormodeM-hot.pdf).
+ * Basically, the universe is split into 1, 2, 4, ..., and N ranges organized as a tree. For each level in the
+ * tree we maintain a count sketch. On some level d, all elements in the same range are treated as the same
+ * element. Therefore, this class must be given a function that will create instances of the same type of
+ * sketch. When calling `get(phi)` we traverse the sketches where the frequency is greater than phi.
+ *
+ * @param sketchFactory A function returning instances of the type of sketch to be used in each level of the
+ *                      heavy hitter data structure.
+ */
 class HeavyHitter(sketchFactory: () => Sketch) {
   private val dyadicTree = Array.tabulate[Sketch](64)(_ => sketchFactory())
   private var n = 0L
 
+  /**
+   * Adds an element to the heavy hitter data structure. This operation will update 64 sketches of the
+   * type given at instantiation.
+   *
+   * @param elem  The element to add.
+   * @param hash  The hash function simulator to use.
+   * @return      This [[HeavyHitter]].
+   */
   def add(elem: Long)(implicit hash: HashFunctionSimulator[Long]): HeavyHitter = {
     // The dyadic intervals are represented implicitly by their start value and their depth.
     // For each level in the dyadic tree, a start value uniquely represents the interval containing it.
@@ -31,6 +53,13 @@ class HeavyHitter(sketchFactory: () => Sketch) {
     this
   }
 
+  /**
+   * Returns all elements that occur more than phi * n times among the n elements added this data structure.
+   *
+   * @param phi   The threshold (0.0 < `phi`` < 1.0).
+   * @param hash  The hash function simulator to use.
+   * @return      A list of the heavy hitters.
+   */
   def get(phi: Double)(implicit hash: HashFunctionSimulator[Long]): List[Long] = {
     val heavyHitters = mutable.ListBuffer[Long]()
     val queue = mutable.Queue[(Int, Long)]() // (depth, s)
