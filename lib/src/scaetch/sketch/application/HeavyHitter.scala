@@ -7,7 +7,7 @@ import scala.collection.mutable
 
 /**
  * A data structure for finding the heavy hitters (elements that occur more than a certain threshold times)
- * in a stream. Works with any of the count sketches implemented in Scaetch.
+ * in a stream. Works with any of the count sketches implemented in Scætch.
  *
  * The algorithm is taken from "What’s Hot and What’s Not: Tracking Most Frequent Items Dynamically" by
  * G. Cormode and S. Muthukrishnan (https://www.cs.princeton.edu/courses/archive/spring04/cos598B/bib/CormodeM-hot.pdf).
