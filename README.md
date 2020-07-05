@@ -72,9 +72,9 @@ import scaetch.sketch.application.HeavyHitter
 
 val cmsFactory = () => CountMinSketch(5, 512)
 val phi = 0.05 // An element is "heavy" if it occurs more than 5% of the time
-val hh = new HeavyHitter(phi, cmsFactory)
+val hh = new HeavyHitter(cmsFactory)
 hh.add(123)
-hh.get // : List[Long]
+hh.get(phi) // : List[Long]
 ```
 
 ## Running the benchmark
