@@ -5,7 +5,7 @@ import scaetch.sketch.hash.HashFunctionSimulator
 
 import scala.collection.mutable
 
-class HeavyHitter(phi: Double, sketchFactory: () => Sketch) {
+class HeavyHitter(sketchFactory: () => Sketch) {
   private val dyadicTree = Array.tabulate[Sketch](64)(_ => sketchFactory())
   private var n = 0L
 
@@ -31,7 +31,7 @@ class HeavyHitter(phi: Double, sketchFactory: () => Sketch) {
     this
   }
 
-  def get()(implicit hash: HashFunctionSimulator[Long]): List[Long] = {
+  def get(phi: Double)(implicit hash: HashFunctionSimulator[Long]): List[Long] = {
     val heavyHitters = mutable.ListBuffer[Long]()
     val queue = mutable.Queue[(Int, Long)]() // (depth, s)
     queue.enqueue((0, Long.MinValue))
